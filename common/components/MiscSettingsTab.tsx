@@ -49,6 +49,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import UploadIcon from '@mui/icons-material/Upload';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import NoWrapButton from '@project/common/components/NoWrapButton';
+import MandarinSettingsSection from '@project/common/components/MandarinSettingsSection';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
@@ -124,6 +125,7 @@ const MiscSettingTab: React.FC<Props> = ({
         webSocketServerUrl,
         subtitleAboveThumbnail,
         thumbnailPreview,
+        mandarinEditionEnabled,
         autoPausePreference,
         subtitleTriggerStartOffset,
         subtitleTriggerEndOffset,
@@ -271,6 +273,14 @@ const MiscSettingTab: React.FC<Props> = ({
                         {t('settings.logs')}
                     </NoWrapButton>
                 </ButtonGroup>
+
+                {extensionInstalled && (
+                    <MandarinSettingsSection
+                        enabled={mandarinEditionEnabled}
+                        onEnabledChanged={(enabled) => onSettingChanged('mandarinEditionEnabled', enabled)}
+                        canExportLedger={!insideApp}
+                    />
+                )}
 
                 <SettingsSection>{t('settings.ui')}</SettingsSection>
                 <FormControl>

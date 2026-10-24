@@ -38,6 +38,10 @@ export default class KeyBindings {
     private _unbindToggleRepeat: Unbinder = false;
     private _unbindCycleAutoPauseResumeMode: Unbinder = false;
     private _unbindToggleSubtitleVisibility: Unbinder = false;
+    private _unbindCycleLearningMode: Unbinder = false;
+    private _unbindMarkLineGotIt: Unbinder = false;
+    private _unbindMarkLineMissed: Unbinder = false;
+    private _unbindRevealLine: Unbinder = false;
     private _unbindAdjustSubtitlePositionOffset: Unbinder = false;
     private _unbindAdjustTopSubtitlePositionOffset: Unbinder = false;
     private _unbindOpenStatistics?: Unbinder = false;
@@ -119,6 +123,53 @@ export default class KeyBindings {
                 context.cycleAutoPauseResumeMode();
             },
             () => context.subtitleController.subtitles.length === 0,
+            true
+        );
+
+        const learningInactive = () =>
+            !context.learningController?.active || context.subtitleController.subtitles.length === 0;
+
+        this._unbindCycleLearningMode = this._keyBinder.bindLearningShortcut(
+            'cycleLearningMode',
+            (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                context.cycleLearningMode();
+            },
+            learningInactive,
+            true
+        );
+
+        this._unbindMarkLineGotIt = this._keyBinder.bindLearningShortcut(
+            'markLineGotIt',
+            (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                context.markLine('got');
+            },
+            learningInactive,
+            true
+        );
+
+        this._unbindMarkLineMissed = this._keyBinder.bindLearningShortcut(
+            'markLineMissed',
+            (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                context.markLine('missed');
+            },
+            learningInactive,
+            true
+        );
+
+        this._unbindRevealLine = this._keyBinder.bindLearningShortcut(
+            'revealLine',
+            (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                context.revealLine();
+            },
+            learningInactive,
             true
         );
 
@@ -522,6 +573,19 @@ export default class KeyBindings {
             this._unbindToggleSubtitleVisibility();
             this._unbindToggleSubtitleVisibility = false;
         }
+
+        for (const unbind of [
+            this._unbindCycleLearningMode,
+            this._unbindMarkLineGotIt,
+            this._unbindMarkLineMissed,
+            this._unbindRevealLine,
+        ]) {
+            if (unbind) unbind();
+        }
+        this._unbindCycleLearningMode = false;
+        this._unbindMarkLineGotIt = false;
+        this._unbindMarkLineMissed = false;
+        this._unbindRevealLine = false;
 
         if (this._unbindAdjustPlaybackRate) {
             this._unbindAdjustPlaybackRate();

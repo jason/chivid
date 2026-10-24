@@ -28,6 +28,7 @@ import ExtensionCommandsHandler from '@/handlers/asbplayerv2/extension-commands-
 import OpenAsbplayerSettingsHandler from '@/handlers/video/open-asbplayer-settings-handler';
 import CaptureVisibleTabHandler from '@/handlers/foreground/capture-visible-tab-handler';
 import CopyToClipboardHandler from '@/handlers/video/copy-to-clipboard-handler';
+import RecordLearningEventHandler from '@/handlers/mandarin/record-learning-event-handler';
 import SettingsUpdatedHandler from '@/handlers/asbplayerv2/settings-updated-handler';
 import type {
     Command,
@@ -203,6 +204,7 @@ export default defineBackground(() => {
         new OpenStatisticsOverlayHandler(tabRegistry),
         new OpenAsbplayerSettingsHandler(),
         new CopyToClipboardHandler(),
+        new RecordLearningEventHandler(),
         new EncodeMp3Handler(),
         new DictionaryHandler(dictionaryDB, tabRegistry),
         new VideoDisappearedHandler(tabRegistry),

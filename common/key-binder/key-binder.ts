@@ -1037,7 +1037,14 @@ export class DefaultKeyBinder implements KeyBinder {
             return () => {};
         }
 
+        const shortcutHasModifier = shortcut.includes('+');
+
         const handler = (event: KeyboardEvent) => {
+            // A bare-letter shortcut such as R must not fire for Shift+R, which is upstream's repeat toggle.
+            if (!shortcutHasModifier && (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)) {
+                return false;
+            }
+
             if (disabledGetter()) {
                 return false;
             }

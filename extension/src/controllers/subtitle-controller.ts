@@ -139,6 +139,12 @@ export default class SubtitleController {
     onOffsetChange?: (offset: number, previousOffset: number) => Promise<void>;
     onMouseOver?: (event: MouseEvent) => void;
     onMouseOut?: (event: MouseEvent) => void;
+    /** Mandarin Edition: called with the index of every subtitle whose text was actually rendered. */
+    onSubtitlesDisplayed?: (indexes: readonly number[]) => void;
+    /** Mandarin Edition: called whenever the loaded subtitles are replaced. */
+    onSubtitlesReplaced?: () => void;
+    private _hideUntilRevealed = false;
+    private readonly revealedSubtitleIndexes = new Set<number>();
 
     constructor(context: Binding, dictionary: DictionaryProvider, settings: SettingsProvider) {
         this.context = context;
@@ -188,6 +194,38 @@ export default class SubtitleController {
 
     set subtitles(subtitles) {
         this.subtitleAnnotations.setSubtitles(subtitles);
+        this.revealedSubtitleIndexes.clear();
+        this.onSubtitlesReplaced?.();
+    }
+
+    /**
+     * Mandarin Edition: when on, each line's text stays hidden, even while paused,
+     * until revealLine() is called for it.
+     */
+    set hideUntilRevealed(hideUntilRevealed: boolean) {
+        if (this._hideUntilRevealed === hideUntilRevealed) return;
+        this._hideUntilRevealed = hideUntilRevealed;
+        this.showingSubtitles = undefined;
+        this.refreshShowingSubtitles();
+    }
+
+    get hideUntilRevealed() {
+        return this._hideUntilRevealed;
+    }
+
+    /** Reveals every line that is currently due. Returns the indexes revealed. */
+    revealCurrentLines(): number[] {
+        const due = [...this.timelineShowingSubtitles, ...this.timelineInvisibleSubtitles].map(
+            (subtitle) => subtitle.index
+        );
+        for (const index of due) this.revealedSubtitleIndexes.add(index);
+        this.showingSubtitles = undefined;
+        this.refreshShowingSubtitles();
+        return due;
+    }
+
+    private _allowedByLearningMode(subtitle: IndexedSubtitleModel) {
+        return !this._hideUntilRevealed || this.revealedSubtitleIndexes.has(subtitle.index);
     }
 
     currentTokenSelectionLocation(): TokenSelectionLocation | undefined {
@@ -487,6 +525,7 @@ export default class SubtitleController {
 
         const showingSubtitles = this.timelineShowingSubtitles
             .filter((subtitle) => this._trackEnabled(subtitle))
+            .filter((subtitle) => this._allowedByLearningMode(subtitle))
             .slice()
             .sort(compareSubtitlesForDisplay);
         const invisibleSubtitles = this.timelineInvisibleSubtitles
@@ -517,6 +556,8 @@ export default class SubtitleController {
             this.topSubtitlesElementOverlay.hide();
             return;
         }
+        if (showingSubtitles.length > 0)
+            this.onSubtitlesDisplayed?.(showingSubtitles.map((subtitle) => subtitle.index));
         if (!subtitlesAreNew && !shouldRenderOffset && !this.refreshCurrentSubtitle) return;
 
         const tokenSelection = this.currentTokenSelectionLocation();

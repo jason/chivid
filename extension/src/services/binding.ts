@@ -100,6 +100,8 @@ import { MobileGestureController } from '@project/extension/src/controllers/mobi
 import { MobileVideoOverlayController } from '@project/extension/src/controllers/mobile-video-overlay-controller';
 import NotificationController from '@project/extension/src/controllers/notification-controller';
 import SubtitleController from '@project/extension/src/controllers/subtitle-controller';
+import LearningController from '@project/extension/src/controllers/learning-controller';
+import type { RecordLearningEventMessage } from '@project/extension/src/handlers/mandarin/record-learning-event-handler';
 import BulkExportController from '@project/extension/src/controllers/bulk-export-controller';
 import VideoDataSyncController from '@project/extension/src/controllers/video-data-sync-controller';
 import AudioRecorder, { TimedRecordingInProgressError } from '@project/extension/src/services/audio-recorder';
@@ -223,6 +225,7 @@ export default class Binding {
     readonly video: HTMLMediaElement;
     readonly hasPageScript: boolean;
     readonly subtitleController: SubtitleController;
+    readonly learningController: LearningController;
     readonly videoDataSyncController: VideoDataSyncController;
     readonly controlsController: ControlsController;
     readonly dragController: DragController;
@@ -295,6 +298,9 @@ export default class Binding {
         this.settings = new SettingsProvider(new ExtensionSettingsStorage());
         this.subtitleController = new SubtitleController(this, this.dictionary, this.settings);
         this.playbackEngine = this._createPlaybackEngine();
+        this.learningController = this._createLearningController();
+        this.subtitleController.onSubtitlesDisplayed = (indexes) => this.learningController.linesDisplayed(indexes);
+        this.subtitleController.onSubtitlesReplaced = () => this.learningController.subtitlesChanged();
         this.videoDataSyncController = new VideoDataSyncController(this, this.settings);
         this.controlsController = new ControlsController(video);
         this.dragController = new DragController(video);
@@ -392,6 +398,48 @@ export default class Binding {
 
     togglePlayMode(targetMode: PlayMode) {
         this.playbackEngine.togglePlaybackMode(targetMode);
+    }
+
+    cycleLearningMode(): void {
+        this.learningController.cycleMode();
+        void this.mobileVideoOverlayController.updateModel();
+    }
+
+    markLine(result: 'got' | 'missed'): void {
+        this.learningController.mark(result);
+    }
+
+    revealLine(): void {
+        this.learningController.reveal();
+    }
+
+    private _createLearningController(): LearningController {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const binding = this;
+        return new LearningController({
+            get subtitles() {
+                return binding.subtitleController.subtitles;
+            },
+            get currentTimeMs() {
+                return binding.currentTimeMs;
+            },
+            setHideUntilRevealed: (hide) => {
+                this.subtitleController.hideUntilRevealed = hide;
+            },
+            revealCurrentLines: () => this.subtitleController.revealCurrentLines(),
+            applyPreset: (preset) => this.playbackEngine.applyPlaybackPreset(preset),
+            recordEvent: (event) => {
+                const command: VideoToExtensionCommand<RecordLearningEventMessage> = {
+                    sender: 'asbplayer-video',
+                    message: { command: 'mandarin-record-learning-event', event },
+                    src: this._registeredVideoSrc,
+                };
+                void browser.runtime.sendMessage(command);
+            },
+            notify: (locKey, replacements) => this.subtitleController.notification({ locKey, replacements }),
+            sourceUrl: () => window.location.href,
+            title: () => document.title,
+        });
     }
 
     adjustPlaybackRate(delta: number): void {
@@ -1387,6 +1435,7 @@ export default class Binding {
         this.pauseOnHoverMode = currentSettings.pauseOnHoverMode;
 
         this.subtitleController.displaySubtitles = currentSettings.streamingDisplaySubtitles;
+        this.learningController.settingsChanged(currentSettings);
         this.subtitleController.bottomSubtitlePositionOffset = currentSettings.subtitlePositionOffset;
         this.subtitleController.topSubtitlePositionOffset = currentSettings.topSubtitlePositionOffset;
         this.subtitleController.setSubtitlesWidth(currentSettings.subtitlesWidth, currentSettings.subtitlesWidthUnit);

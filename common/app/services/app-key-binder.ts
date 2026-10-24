@@ -415,6 +415,15 @@ export default class AppKeyBinder implements KeyBinder {
         );
     }
 
+    bindLearningShortcut(
+        name: 'cycleLearningMode' | 'markLineGotIt' | 'markLineMissed' | 'revealLine',
+        onShortcut: (event: KeyboardEvent) => void,
+        disabledGetter: () => boolean,
+        useCapture?: boolean | undefined
+    ): () => void {
+        return this.defaultKeyBinder.bindLearningShortcut(name, onShortcut, disabledGetter, useCapture);
+    }
+
     bindAdjustSubtitlePositionOffset(
         onAdjustSubtitlePositionOffset: (event: KeyboardEvent, increase: boolean) => void,
         disabledGetter: () => boolean,

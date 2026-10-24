@@ -826,10 +826,15 @@
             "ears": "Ears",
             "listenFirst": "Listen First"
         },
-        "modeChanged": "Mode: {{mode}}",
         "gotIt": "Got it",
         "missed": "Missed",
         "alreadyRevealed": "Text was already shown, so this line is not counted",
-        "nothingToReveal": "No line to reveal yet"
+        "nothingToReveal": "No line to reveal yet",
+        "settingsTitle": "Mandarin Edition",
+        "enable": "Enable Mandarin Edition",
+        "enableHelp": "Adds learning modes (Shift+L), listening marks (G understood, H missed) and Reveal (R). Turn off to get stock asbplayer back.",
+        "exportLedger": "Export learning ledger",
+        "ledgerEmpty": "Nothing recorded yet. Press G or H on a hidden line first.",
+        "exportFailed": "Could not read the ledger. Try again from the extension settings page."
     }
 }

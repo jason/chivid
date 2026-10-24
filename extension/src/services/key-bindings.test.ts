@@ -39,6 +39,65 @@ describe('KeyBindings playback modes', () => {
         expect(togglePlayMode).toHaveBeenCalledWith(PlayMode.repeat);
     });
 
+    const pressKey = (key: string, keyCode: number, shiftKey = false) => {
+        const keydown = new KeyboardEvent('keydown', { key, shiftKey, bubbles: true });
+        Object.defineProperty(keydown, 'keyCode', { value: keyCode });
+        document.dispatchEvent(keydown);
+        const keyup = new KeyboardEvent('keyup', { key, shiftKey, bubbles: true });
+        Object.defineProperty(keyup, 'keyCode', { value: keyCode });
+        document.dispatchEvent(keyup);
+    };
+
+    const learningContext = (active: boolean) =>
+        ({
+            subtitleController: { subtitles: [{}], currentSubtitle: () => [null] },
+            learningController: { active },
+            togglePlayMode: jest.fn(),
+            markLine: jest.fn(),
+            revealLine: jest.fn(),
+            cycleLearningMode: jest.fn(),
+        }) as unknown as Binding & {
+            markLine: jest.Mock;
+            revealLine: jest.Mock;
+            togglePlayMode: jest.Mock;
+        };
+
+    it('marks the heard line with G and H only when Mandarin Edition is on', () => {
+        const context = learningContext(true);
+        const binding = new KeyBindings();
+        bindings.push(binding);
+        binding.setKeyBindSet(context, defaultSettings.keyBindSet);
+
+        pressKey('g', 71);
+        pressKey('h', 72);
+
+        expect(context.markLine.mock.calls).toEqual([['got'], ['missed']]);
+    });
+
+    it('ignores learning shortcuts while Mandarin Edition is off', () => {
+        const context = learningContext(false);
+        const binding = new KeyBindings();
+        bindings.push(binding);
+        binding.setKeyBindSet(context, defaultSettings.keyBindSet);
+
+        pressKey('g', 71);
+        pressKey('r', 82);
+
+        expect(context.markLine).not.toHaveBeenCalled();
+        expect(context.revealLine).not.toHaveBeenCalled();
+    });
+
+    it('does not treat Shift+R (repeat) as Reveal', () => {
+        const context = learningContext(true);
+        const binding = new KeyBindings();
+        bindings.push(binding);
+        binding.setKeyBindSet(context, defaultSettings.keyBindSet);
+
+        pressKey('R', 82, true);
+
+        expect(context.revealLine).not.toHaveBeenCalled();
+    });
+
     it('repeatedly seeks and selects matching tokens without taking focus from the video', () => {
         const subtitles = [
             makeSubtitle({

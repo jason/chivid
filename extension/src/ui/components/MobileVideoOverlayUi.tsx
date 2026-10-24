@@ -12,6 +12,7 @@ import type {
     PlaybackRateToVideoMessage,
     PlayMode,
     PlayModeMessage,
+    CycleLearningModeMessage,
     ToggleSubtitlesMessage,
 } from '@project/common';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
@@ -178,6 +179,19 @@ const MobileVideoOverlayUi = () => {
         [location]
     );
 
+    const handleCycleLearningMode = useCallback(() => {
+        if (!location) {
+            return;
+        }
+
+        const command: MobileOverlayToVideoCommand<CycleLearningModeMessage> = {
+            sender: 'asbplayer-mobile-overlay-to-video',
+            message: { command: 'cycleLearningMode' },
+            src: location.src,
+        };
+        void browser.runtime.sendMessage(command);
+    }, [location]);
+
     const handleToggleSubtitles = useCallback(() => {
         if (!location) {
             return;
@@ -265,6 +279,7 @@ const MobileVideoOverlayUi = () => {
                     onSeek={handleSeek}
                     onPlaybackRate={handlePlaybackRate}
                     onPlayModeSelected={handlePlayModeSelected}
+                    onCycleLearningMode={handleCycleLearningMode}
                     onToggleSubtitles={handleToggleSubtitles}
                     onPlayModeSelectorOpened={handlePlayModeSelectorOpened}
                     onPlayModeSelectorClosed={handlePlayModeSelectorClosed}

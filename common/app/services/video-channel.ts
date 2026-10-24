@@ -774,6 +774,9 @@ export default class VideoChannel {
             lastSelectedAnkiExportMode,
             thumbnailPreview,
             subtitleAboveThumbnail,
+            mandarinEditionEnabled,
+            learningMode,
+            learningModeSnapshot,
         } = settings;
         const message: MiscSettingsToVideoMessage = {
             command: 'miscSettings',
@@ -825,6 +828,9 @@ export default class VideoChannel {
                 tabName,
                 pauseOnHoverMode,
                 lastSelectedAnkiExportMode,
+                mandarinEditionEnabled,
+                learningMode,
+                learningModeSnapshot,
                 thumbnailPreview,
                 subtitleAboveThumbnail,
             },

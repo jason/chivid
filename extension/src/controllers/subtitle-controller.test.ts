@@ -419,3 +419,84 @@ describe('SubtitleController appearance rendering', () => {
         expect(containerWidthFor(2000, 'px')).toBe(`${Math.min(window.innerWidth, 2000)}px`);
     });
 });
+
+describe('SubtitleController hide until revealed (Mandarin Edition)', () => {
+    const controllers: SubtitleController[] = [];
+
+    afterEach(() => {
+        for (const controller of controllers) controller.unbind();
+        controllers.length = 0;
+        document.body.replaceChildren();
+    });
+
+    const controllerWithLine = () => {
+        const video = document.createElement('video');
+        video.getBoundingClientRect = () => ({ left: 0, top: 0, width: 640, height: 360 }) as DOMRect;
+        const controller = new SubtitleController(
+            { video, registeredVideoSrc: 'https://example.com/video.mp4', currentTimeMs: 0 } as unknown as Binding,
+            { publishStatisticsSnapshot: async () => {} } as unknown as DictionaryProvider,
+            {
+                activeProfile: async () => undefined,
+                getAll: async () => defaultSettings,
+                getSingle: async (key: keyof typeof defaultSettings) => defaultSettings[key],
+            } as unknown as SettingsProvider
+        );
+        controllers.push(controller);
+        controller.setSubtitleSettings(defaultSettings);
+        controller.subtitles = [
+            makeSubtitle({ index: 0, text: '银行九点就开门了。', originalText: '银行九点就开门了。' }),
+        ];
+        controller.cacheHtml();
+        return controller;
+    };
+
+    const renderedText = () => document.querySelector('.asbplayer-subtitles-container-bottom span')?.textContent ?? '';
+
+    it('renders nothing for a due line while paused and reports nothing displayed', () => {
+        const controller = controllerWithLine();
+        const displayed: number[][] = [];
+        controller.onSubtitlesDisplayed = (indexes) => displayed.push([...indexes]);
+        controller.hideUntilRevealed = true;
+
+        controller.playbackStateChanged({ timestampMs: 0, showingSubtitleIndexes: [0], paused: true });
+
+        expect(renderedText()).toBe('');
+        expect(displayed).toEqual([]);
+    });
+
+    it('shows the line and reports it displayed once revealed', () => {
+        const controller = controllerWithLine();
+        const displayed: number[][] = [];
+        controller.onSubtitlesDisplayed = (indexes) => displayed.push([...indexes]);
+        controller.hideUntilRevealed = true;
+        controller.playbackStateChanged({ timestampMs: 0, showingSubtitleIndexes: [0], paused: false });
+
+        expect(controller.revealCurrentLines()).toEqual([0]);
+
+        expect(renderedText()).toContain('银行九点就开门了。');
+        expect(displayed.at(-1)).toEqual([0]);
+    });
+
+    it('reports a line as displayed when nothing hides it', () => {
+        const controller = controllerWithLine();
+        const displayed: number[][] = [];
+        controller.onSubtitlesDisplayed = (indexes) => displayed.push([...indexes]);
+
+        controller.playbackStateChanged({ timestampMs: 0, showingSubtitleIndexes: [0], paused: false });
+
+        expect(displayed).toEqual([[0]]);
+    });
+
+    it('forgets reveals when subtitles are replaced', () => {
+        const controller = controllerWithLine();
+        controller.hideUntilRevealed = true;
+        controller.playbackStateChanged({ timestampMs: 0, showingSubtitleIndexes: [0], paused: false });
+        controller.revealCurrentLines();
+
+        controller.subtitles = [makeSubtitle({ index: 0, text: '因为离家近啊。', originalText: '因为离家近啊。' })];
+        controller.cacheHtml();
+        controller.playbackStateChanged({ timestampMs: 0, showingSubtitleIndexes: [0], paused: false });
+
+        expect(renderedText()).toBe('');
+    });
+});

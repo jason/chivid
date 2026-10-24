@@ -32,6 +32,40 @@ const useStyles = makeStyles(({ anchor }: { anchor: Anchor }) => ({
     recordingButton: {
         color: 'red',
     },
+    learningModePill: {
+        height: 28,
+        padding: '0 14px',
+        margin: '0 8px 0 6px',
+        borderRadius: 999,
+        border: '1px solid rgba(236, 226, 214, 0.24)',
+        background: 'transparent',
+        color: '#ece2d6',
+        font: 'inherit',
+        fontSize: 12,
+        fontWeight: 600,
+        letterSpacing: '0.02em',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        '&:hover': {
+            background: 'rgba(210, 84, 58, 0.16)',
+        },
+        '&:focus-visible': {
+            outline: '2px solid #d2543a',
+            outlineOffset: 2,
+        },
+    },
+    learningModeDot: {
+        width: 6,
+        height: 6,
+        borderRadius: '50%',
+        background: '#d2543a',
+    },
+    learningModeDotOff: {
+        background: 'rgba(236, 226, 214, 0.4)',
+    },
     container: {
         display: 'inline-flex',
         width: 'auto',
@@ -90,6 +124,7 @@ interface Props {
     onPlayModeSelected: (playMode: PlayMode) => void;
     onSeek: (timestamp: number) => void;
     onToggleSubtitles: () => void;
+    onCycleLearningMode?: () => void;
     flexDirection: React.CSSProperties['flexDirection'];
     onPlayModeSelectorOpened?: () => void;
     onPlayModeSelectorClosed?: () => void;
@@ -110,6 +145,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
         onPlayModeSelected,
         onSeek,
         onToggleSubtitles,
+        onCycleLearningMode,
         flexDirection,
         onPlayModeSelectorOpened,
         onPlayModeSelectorClosed,
@@ -429,6 +465,25 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
                                     )}
                                 </IconButton>
                             </span>
+                        </Tooltip>
+                    </Grid>
+                )}
+                {!model.emptySubtitleTrack && model.learningMode !== undefined && onCycleLearningMode && (
+                    <Grid item>
+                        <Tooltip {...defaultTooltipProps} title={t('binds.cycleLearningMode')}>
+                            <button
+                                type="button"
+                                className={classes.learningModePill}
+                                onClick={onCycleLearningMode}
+                                aria-label={t('binds.cycleLearningMode')}
+                            >
+                                <span
+                                    className={`${classes.learningModeDot} ${
+                                        model.learningMode === 'off' ? classes.learningModeDotOff : ''
+                                    }`}
+                                />
+                                {t(`mandarin.mode.${model.learningMode}`)}
+                            </button>
                         </Tooltip>
                     </Grid>
                 )}
