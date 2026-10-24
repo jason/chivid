@@ -184,7 +184,9 @@
         "cycleLearningMode": "Cycle learning mode (Mandarin Edition)",
         "markLineGotIt": "Mark hidden line as understood (Mandarin Edition)",
         "markLineMissed": "Mark hidden line as missed (Mandarin Edition)",
-        "revealLine": "Reveal the hidden line (Mandarin Edition)"
+        "revealLine": "Reveal the hidden line (Mandarin Edition)",
+        "segmentStart": "Mark segment start, or replay it text-free while looping (Mandarin Edition)",
+        "segmentEnd": "Mark segment end and loop it, or stop the loop (Mandarin Edition)"
     },
     "controls": {
         "autoPauseMode": "Pausa automática",
@@ -835,6 +837,15 @@
         "enableHelp": "Adds learning modes (Shift+L), listening marks (G understood, H missed) and Reveal (R). Turn off to get stock asbplayer back.",
         "exportLedger": "Export learning ledger",
         "ledgerEmpty": "Nothing recorded yet. Press G or H on a hidden line first.",
-        "exportFailed": "Could not read the ledger. Try again from the extension settings page."
+        "exportFailed": "Could not read the ledger. Try again from the extension settings page.",
+        "segment": {
+            "started": "Segment start marked. Press ] at the end.",
+            "looping": "Looping segment, text hidden",
+            "cleanPass": "Clean pass: listen once more without text",
+            "stopped": "Loop stopped",
+            "noLine": "Play a line first",
+            "endBeforeStart": "End must come after the start",
+            "tooLong": "Segments are limited to 2 minutes"
+        }
     }
 }

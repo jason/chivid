@@ -413,6 +413,16 @@ export default class Binding {
         this.learningController.reveal();
     }
 
+    pressSegmentStart(): void {
+        this.learningController.pressSegmentStart();
+    }
+
+    pressSegmentEnd(): void {
+        this.learningController.pressSegmentEnd();
+    }
+
+    private readonly _learningTimeListener = () => this.learningController.timeChanged(this.currentTimeMs);
+
     private _createLearningController(): LearningController {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const binding = this;
@@ -427,6 +437,8 @@ export default class Binding {
                 this.subtitleController.hideUntilRevealed = hide;
             },
             revealCurrentLines: () => this.subtitleController.revealCurrentLines(),
+            rehideLines: (indexes) => this.subtitleController.rehideLines(indexes),
+            seek: (timestampMs) => void this.seek(timestampMs),
             applyPreset: (preset) => this.playbackEngine.applyPlaybackPreset(preset),
             recordEvent: (event) => {
                 const command: VideoToExtensionCommand<RecordLearningEventMessage> = {
@@ -721,6 +733,7 @@ export default class Binding {
     }
 
     bind() {
+        this.video.addEventListener('timeupdate', this._learningTimeListener);
         asbTrace('playback/binding', 'Binding media owner', {
             readyState: this.video.readyState,
             hasVideoSrc: this.video.src.length > 0,
@@ -1525,6 +1538,7 @@ export default class Binding {
     }
 
     unbind() {
+        this.video.removeEventListener('timeupdate', this._learningTimeListener);
         this._subtitleSource = undefined;
         asbTrace('playback/binding', 'Unbinding media owner', {
             subscribed: this.subscribed,

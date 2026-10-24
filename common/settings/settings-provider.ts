@@ -244,6 +244,8 @@ export const defaultSettings: AsbplayerSettings = {
         markLineGotIt: { keys: 'G' },
         markLineMissed: { keys: 'H' },
         revealLine: { keys: 'R' },
+        segmentStart: { keys: '[' },
+        segmentEnd: { keys: ']' },
         moveBottomSubtitlesUp: { keys: '' },
         moveBottomSubtitlesDown: { keys: '' },
         moveTopSubtitlesUp: { keys: '' },

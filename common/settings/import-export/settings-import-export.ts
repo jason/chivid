@@ -596,6 +596,8 @@ const settingsSchema = {
                 markLineGotIt: { $ref: '/KeyBind' },
                 markLineMissed: { $ref: '/KeyBind' },
                 revealLine: { $ref: '/KeyBind' },
+                segmentStart: { $ref: '/KeyBind' },
+                segmentEnd: { $ref: '/KeyBind' },
                 moveBottomSubtitlesUp: { $ref: '/KeyBind' },
                 moveBottomSubtitlesDown: { $ref: '/KeyBind' },
                 moveTopSubtitlesUp: { $ref: '/KeyBind' },

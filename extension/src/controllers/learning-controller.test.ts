@@ -40,6 +40,14 @@ class FakeHost implements LearningHost {
     revealCurrentLines() {
         return this.dueIndexes;
     }
+    rehidden: number[][] = [];
+    seeks: number[] = [];
+    rehideLines(indexes: readonly number[]) {
+        this.rehidden.push([...indexes]);
+    }
+    seek(timestampMs: number) {
+        this.seeks.push(timestampMs);
+    }
     applyPreset(preset: Parameters<LearningHost['applyPreset']>[0]) {
         if (!this.bound) return false;
         this.presets.push(preset);
@@ -178,5 +186,52 @@ describe('LearningController', () => {
         host.dueIndexes = [];
         controller.reveal();
         expect(host.notes).toEqual(['mandarin.nothingToReveal']);
+    });
+
+    it('loops a multi-line segment with text hidden, even in Just Watch', () => {
+        const { host, controller } = controllerIn('justWatch');
+        host.currentTimeMs = 500;
+        controller.pressSegmentStart();
+        host.currentTimeMs = 2500;
+        controller.pressSegmentEnd();
+
+        expect(host.hideUntilRevealed).toBe(true);
+        expect(host.seeks).toEqual([0]);
+        expect(host.notes).toEqual(['mandarin.segment.started', 'mandarin.segment.looping']);
+
+        controller.timeChanged(3500 + 200);
+        expect(host.seeks).toEqual([0, 0]);
+    });
+
+    it('re-hides the segment and replays it for a clean pass', () => {
+        const { host, controller } = controllerIn('ears');
+        host.currentTimeMs = 500;
+        controller.pressSegmentStart();
+        host.currentTimeMs = 2500;
+        controller.pressSegmentEnd();
+        controller.pressSegmentStart();
+
+        expect(host.rehidden).toEqual([[0, 1]]);
+        expect(host.seeks).toEqual([0, 0]);
+        expect(host.notes.at(-1)).toBe('mandarin.segment.cleanPass');
+    });
+
+    it('restores the mode hiding when the loop stops', () => {
+        const { host, controller } = controllerIn('justWatch');
+        host.currentTimeMs = 500;
+        controller.pressSegmentStart();
+        host.currentTimeMs = 2500;
+        controller.pressSegmentEnd();
+        controller.pressSegmentEnd();
+
+        expect(host.hideUntilRevealed).toBe(false);
+        controller.timeChanged(10000);
+        expect(host.seeks).toEqual([0]);
+    });
+
+    it('explains why a segment end was rejected', () => {
+        const { host, controller } = controllerIn('ears');
+        controller.pressSegmentEnd();
+        expect(host.notes).toEqual(['mandarin.segment.noLine']);
     });
 });

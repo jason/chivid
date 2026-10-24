@@ -11,12 +11,15 @@ import type { NewLedgerEvent } from '@project/common/mandarin/ledger';
 import { LineRecognitionTracker, lineHeardAt, primaryTrack } from '@project/common/mandarin/line-recognition';
 import type { RecognitionResult } from '@project/common/mandarin/line-recognition';
 import type { AsbplayerSettings, LearningModeName } from '@project/common/settings';
+import { SegmentLoop } from '@project/common/mandarin/segment-loop';
 
 export interface LearningHost {
     readonly subtitles: readonly IndexedSubtitleModel[];
     readonly currentTimeMs: number;
     setHideUntilRevealed(hide: boolean): void;
     revealCurrentLines(): number[];
+    rehideLines(indexes: readonly number[]): void;
+    seek(timestampMs: number): void;
     applyPreset(preset: {
         readonly settings: LearningModeSettings;
         readonly playModes?: readonly PlayMode[];
@@ -43,6 +46,7 @@ const modeLocKey = (mode: LearningModeName) => `mandarin.mode.${mode}`;
 export default class LearningController {
     private readonly host: LearningHost;
     private readonly tracker = new LineRecognitionTracker();
+    private readonly segment = new SegmentLoop();
     private enabled = false;
     private mode: LearningModeName = LearningMode.off;
     private snapshot?: LearningModeSettings;
@@ -67,11 +71,65 @@ export default class LearningController {
         this.snapshot = settings.learningModeSnapshot;
         this.modeSettings = pickLearningModeSettings(settings);
         this.track = primaryTrack(settings.seekableTracks);
-        this.host.setHideUntilRevealed(this.enabled && isTextHiddenByDefault(this.mode));
+        this.applyHiding();
     }
 
     subtitlesChanged(): void {
         this.tracker.reset();
+        this.segment.reset();
+        this.applyHiding();
+    }
+
+    private applyHiding(): void {
+        const looping = this.segment.state.kind === 'looping';
+        this.host.setHideUntilRevealed(this.enabled && (looping || isTextHiddenByDefault(this.mode)));
+    }
+
+    private primaryLines() {
+        return this.host.subtitles.filter((subtitle) => subtitle.track === this.track);
+    }
+
+    pressSegmentStart(): void {
+        if (!this.enabled) return;
+        const action = this.segment.pressStart(this.primaryLines(), this.host.currentTimeMs);
+        switch (action.kind) {
+            case 'started':
+                this.host.notify('mandarin.segment.started');
+                return;
+            case 'cleanPass':
+                this.host.rehideLines(this.segment.linesInLoop(this.host.subtitles));
+                this.host.seek(action.startMs);
+                this.host.notify('mandarin.segment.cleanPass');
+                return;
+            case 'rejected':
+                this.host.notify(`mandarin.segment.${action.reason}`);
+                return;
+        }
+    }
+
+    pressSegmentEnd(): void {
+        if (!this.enabled) return;
+        const action = this.segment.pressEnd(this.primaryLines(), this.host.currentTimeMs);
+        switch (action.kind) {
+            case 'looping':
+                this.applyHiding();
+                this.host.seek(action.startMs);
+                this.host.notify('mandarin.segment.looping');
+                return;
+            case 'stopped':
+                this.applyHiding();
+                this.host.notify('mandarin.segment.stopped');
+                return;
+            case 'rejected':
+                this.host.notify(`mandarin.segment.${action.reason}`);
+                return;
+        }
+    }
+
+    timeChanged(nowMs: number): void {
+        if (!this.enabled) return;
+        const target = this.segment.seekTargetAt(nowMs);
+        if (target !== undefined) this.host.seek(target);
     }
 
     linesDisplayed(indexes: readonly number[]): void {
@@ -91,7 +149,7 @@ export default class LearningController {
         this.mode = transition.mode;
         this.snapshot = transition.snapshot;
         this.modeSettings = transition.settings;
-        this.host.setHideUntilRevealed(isTextHiddenByDefault(this.mode));
+        this.applyHiding();
         this.host.notify(modeLocKey(this.mode));
     }
 

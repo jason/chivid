@@ -224,6 +224,13 @@ export default class SubtitleController {
         return due;
     }
 
+    /** Hides lines again after a reveal, for a clean text-free pass over a segment. */
+    rehideLines(indexes: readonly number[]): void {
+        for (const index of indexes) this.revealedSubtitleIndexes.delete(index);
+        this.showingSubtitles = undefined;
+        this.refreshShowingSubtitles();
+    }
+
     private _allowedByLearningMode(subtitle: IndexedSubtitleModel) {
         return !this._hideUntilRevealed || this.revealedSubtitleIndexes.has(subtitle.index);
     }

@@ -1,7 +1,7 @@
 import { asbError } from '@project/common/util/log';
 import type { CopySubtitleMessage, SubtitleModel } from '@project/common';
 import { PostMineAction } from '@project/common';
-import type { DefaultKeyBinder, KeyBinder } from '@project/common/key-binder';
+import type { DefaultKeyBinder, KeyBinder, LearningShortcutName } from '@project/common/key-binder';
 import type { SeekableTracks, TokenJumpTarget, TokenStatus } from '@project/common/settings';
 import type { ExtensionMessage } from '@project/common/app/services/chrome-extension';
 import type ChromeExtension from '@project/common/app/services/chrome-extension';
@@ -416,7 +416,7 @@ export default class AppKeyBinder implements KeyBinder {
     }
 
     bindLearningShortcut(
-        name: 'cycleLearningMode' | 'markLineGotIt' | 'markLineMissed' | 'revealLine',
+        name: LearningShortcutName,
         onShortcut: (event: KeyboardEvent) => void,
         disabledGetter: () => boolean,
         useCapture?: boolean | undefined

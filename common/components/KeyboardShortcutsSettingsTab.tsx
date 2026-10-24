@@ -74,6 +74,8 @@ const keyBindSectionByName: { [key in KeyBindName]: KeyboardShortcutSection } = 
     markLineGotIt: 'playback',
     markLineMissed: 'playback',
     revealLine: 'playback',
+    segmentStart: 'playback',
+    segmentEnd: 'playback',
     seekBackward: 'seek',
     seekForward: 'seek',
     seekToPreviousSubtitle: 'seek',
@@ -422,6 +424,16 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
             },
             revealLine: {
                 label: t('binds.revealLine'),
+                boundViaBrowser: false,
+                hide: !extensionInstalled,
+            },
+            segmentStart: {
+                label: t('binds.segmentStart'),
+                boundViaBrowser: false,
+                hide: !extensionInstalled,
+            },
+            segmentEnd: {
+                label: t('binds.segmentEnd'),
                 boundViaBrowser: false,
                 hide: !extensionInstalled,
             },

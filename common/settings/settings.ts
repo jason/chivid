@@ -529,6 +529,8 @@ export interface KeyBindSet {
     readonly markLineGotIt: KeyBind;
     readonly markLineMissed: KeyBind;
     readonly revealLine: KeyBind;
+    readonly segmentStart: KeyBind;
+    readonly segmentEnd: KeyBind;
     readonly moveBottomSubtitlesUp: KeyBind;
     readonly moveBottomSubtitlesDown: KeyBind;
     readonly moveTopSubtitlesUp: KeyBind;

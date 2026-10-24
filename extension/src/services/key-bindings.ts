@@ -42,6 +42,8 @@ export default class KeyBindings {
     private _unbindMarkLineGotIt: Unbinder = false;
     private _unbindMarkLineMissed: Unbinder = false;
     private _unbindRevealLine: Unbinder = false;
+    private _unbindSegmentStart: Unbinder = false;
+    private _unbindSegmentEnd: Unbinder = false;
     private _unbindAdjustSubtitlePositionOffset: Unbinder = false;
     private _unbindAdjustTopSubtitlePositionOffset: Unbinder = false;
     private _unbindOpenStatistics?: Unbinder = false;
@@ -168,6 +170,28 @@ export default class KeyBindings {
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 context.revealLine();
+            },
+            learningInactive,
+            true
+        );
+
+        this._unbindSegmentStart = this._keyBinder.bindLearningShortcut(
+            'segmentStart',
+            (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                context.pressSegmentStart();
+            },
+            learningInactive,
+            true
+        );
+
+        this._unbindSegmentEnd = this._keyBinder.bindLearningShortcut(
+            'segmentEnd',
+            (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                context.pressSegmentEnd();
             },
             learningInactive,
             true
@@ -579,6 +603,8 @@ export default class KeyBindings {
             this._unbindMarkLineGotIt,
             this._unbindMarkLineMissed,
             this._unbindRevealLine,
+            this._unbindSegmentStart,
+            this._unbindSegmentEnd,
         ]) {
             if (unbind) unbind();
         }
@@ -586,6 +612,8 @@ export default class KeyBindings {
         this._unbindMarkLineGotIt = false;
         this._unbindMarkLineMissed = false;
         this._unbindRevealLine = false;
+        this._unbindSegmentStart = false;
+        this._unbindSegmentEnd = false;
 
         if (this._unbindAdjustPlaybackRate) {
             this._unbindAdjustPlaybackRate();

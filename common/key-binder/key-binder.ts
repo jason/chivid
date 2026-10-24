@@ -4,6 +4,14 @@ import type { KeyBindSet, SeekableTracks, TokenJumpTarget } from '@project/commo
 import { isTrackSeekable, TokenState, TokenStatus } from '@project/common/settings';
 import { adjacentSubtitle } from '@project/common/util';
 
+export type LearningShortcutName =
+    | 'cycleLearningMode'
+    | 'markLineGotIt'
+    | 'markLineMissed'
+    | 'revealLine'
+    | 'segmentStart'
+    | 'segmentEnd';
+
 export interface KeyBinder {
     bindCopy<T extends SubtitleModel = SubtitleModel>(
         onCopy: (event: KeyboardEvent, subtitle: T) => void,
@@ -128,7 +136,7 @@ export interface KeyBinder {
         capture?: boolean
     ): () => void;
     bindLearningShortcut(
-        name: 'cycleLearningMode' | 'markLineGotIt' | 'markLineMissed' | 'revealLine',
+        name: LearningShortcutName,
         onShortcut: (event: KeyboardEvent) => void,
         disabledGetter: () => boolean,
         capture?: boolean
@@ -1026,7 +1034,7 @@ export class DefaultKeyBinder implements KeyBinder {
     }
 
     bindLearningShortcut(
-        name: 'cycleLearningMode' | 'markLineGotIt' | 'markLineMissed' | 'revealLine',
+        name: LearningShortcutName,
         onShortcut: (event: KeyboardEvent) => void,
         disabledGetter: () => boolean,
         capture = false
