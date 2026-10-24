@@ -592,6 +592,10 @@ const settingsSchema = {
                 toggleRepeat: { $ref: '/KeyBind' },
                 toggleSubtitleVisibility: { $ref: '/KeyBind' },
                 cycleAutoPauseResumeMode: { $ref: '/KeyBind' },
+                cycleLearningMode: { $ref: '/KeyBind' },
+                markLineGotIt: { $ref: '/KeyBind' },
+                markLineMissed: { $ref: '/KeyBind' },
+                revealLine: { $ref: '/KeyBind' },
                 moveBottomSubtitlesUp: { $ref: '/KeyBind' },
                 moveBottomSubtitlesDown: { $ref: '/KeyBind' },
                 moveTopSubtitlesUp: { $ref: '/KeyBind' },
@@ -800,6 +804,22 @@ const settingsSchema = {
         },
         thumbnailPreview: {
             type: 'boolean',
+        },
+        mandarinEditionEnabled: {
+            type: 'boolean',
+        },
+        learningMode: {
+            type: 'string',
+            enum: ['off', 'justWatch', 'ears', 'listenFirst'],
+        },
+        learningModeSnapshot: {
+            type: 'object',
+            properties: {
+                subtitleVisibility: { type: 'string', enum: ['whenDue', 'whilePaused'] },
+                autoPausePreference: { type: 'number' },
+                autoPauseResumeMode: { type: 'string', enum: ['manual', 'fixed', 'subtitleLength'] },
+                repeatCountPreference: { type: 'number' },
+            },
         },
         subtitleAboveThumbnail: {
             type: 'boolean',

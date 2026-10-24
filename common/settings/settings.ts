@@ -82,6 +82,15 @@ export interface PlaybackPosition {
     readonly position: number;
 }
 
+export type LearningModeName = 'off' | 'justWatch' | 'ears' | 'listenFirst';
+
+export interface LearningModeSnapshot {
+    readonly subtitleVisibility: SubtitleVisibility;
+    readonly autoPausePreference: AutoPausePreference;
+    readonly autoPauseResumeMode: AutoPauseResumeMode;
+    readonly repeatCountPreference: number;
+}
+
 export interface MiscSettings {
     readonly themeType: 'dark' | 'light';
     readonly videoSubtitleSplitBehavior: VideoSubtitleSplitBehavior;
@@ -132,6 +141,10 @@ export interface MiscSettings {
     readonly pauseOnHoverMode: PauseOnHoverMode;
     readonly subtitleAboveThumbnail: boolean;
     readonly thumbnailPreview: boolean;
+    readonly mandarinEditionEnabled: boolean;
+    readonly learningMode: LearningModeName;
+    /** The learner's own playback values, restored when learning modes are turned off. */
+    readonly learningModeSnapshot: LearningModeSnapshot;
 }
 
 export type AutoPausePreferenceEdge = AutoPausePreference.atStart | AutoPausePreference.atEnd;
@@ -512,6 +525,10 @@ export interface KeyBindSet {
     readonly toggleRepeat: KeyBind;
     readonly toggleSubtitleVisibility: KeyBind;
     readonly cycleAutoPauseResumeMode: KeyBind;
+    readonly cycleLearningMode: KeyBind;
+    readonly markLineGotIt: KeyBind;
+    readonly markLineMissed: KeyBind;
+    readonly revealLine: KeyBind;
     readonly moveBottomSubtitlesUp: KeyBind;
     readonly moveBottomSubtitlesDown: KeyBind;
     readonly moveTopSubtitlesUp: KeyBind;

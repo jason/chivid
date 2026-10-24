@@ -180,7 +180,11 @@
         "jumpToNextToken": "Jump to next {{type}} word",
         "jumpToPreviousToken": "Jump to previous {{type}} word",
         "jumpToTokenHelperText": "Use these shortcuts with Yomitan's 'Scan selected text' shortcut for keyboard only control and lookups.",
-        "openStatistics": "Apri statistiche"
+        "openStatistics": "Apri statistiche",
+        "cycleLearningMode": "Cycle learning mode (Mandarin Edition)",
+        "markLineGotIt": "Mark hidden line as understood (Mandarin Edition)",
+        "markLineMissed": "Mark hidden line as missed (Mandarin Edition)",
+        "revealLine": "Reveal the hidden line (Mandarin Edition)"
     },
     "controls": {
         "autoPauseMode": "Pausa automatica",
@@ -814,5 +818,18 @@
         "categoryDrama": "Drama",
         "episodeRegex": "Custom episode regex",
         "episodeRegexHint": "Detects the episode from the page title to auto-filter files. Capture group 1 is the episode number; built-in rules are used when it doesn't match. Press Enter to apply."
+    },
+    "mandarin": {
+        "mode": {
+            "off": "Learning off",
+            "justWatch": "Just Watch",
+            "ears": "Ears",
+            "listenFirst": "Listen First"
+        },
+        "modeChanged": "Mode: {{mode}}",
+        "gotIt": "Got it",
+        "missed": "Missed",
+        "alreadyRevealed": "Text was already shown, so this line is not counted",
+        "nothingToReveal": "No line to reveal yet"
     }
 }

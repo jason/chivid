@@ -368,6 +368,36 @@ describe('PlaybackEngine', () => {
         ]);
     });
 
+    it('applies and persists a playback preset with its play modes in one step', async () => {
+        const harness = await makePlaybackEngine([PlayMode.normal]);
+
+        const applied = harness.playbackEngine.applyPlaybackPreset({
+            settings: { subtitleVisibility: SubtitleVisibility.whilePaused, repeatCountPreference: 1 },
+            playModes: [PlayMode.autoPause],
+            alsoSave: { learningMode: 'listenFirst' },
+        });
+
+        expect(applied).toBe(true);
+        expect(harness.playbackEngine.playbackModes).toEqual(new Set([PlayMode.autoPause]));
+        expect(harness.savedSettings).toEqual([
+            {
+                subtitleVisibility: SubtitleVisibility.whilePaused,
+                repeatCountPreference: 1,
+                learningMode: 'listenFirst',
+            },
+            { lastPlaybackModes: [PlayMode.autoPause] },
+        ]);
+    });
+
+    it('leaves play modes alone when a preset does not name any', async () => {
+        const harness = await makePlaybackEngine([PlayMode.repeat]);
+
+        harness.playbackEngine.applyPlaybackPreset({ settings: { subtitleVisibility: SubtitleVisibility.whenDue } });
+
+        expect(harness.playbackEngine.playbackModes).toEqual(new Set([PlayMode.repeat]));
+        expect(harness.savedSettings).toEqual([{ subtitleVisibility: SubtitleVisibility.whenDue }]);
+    });
+
     it('does not change the engine-owned offset when settings are refreshed', async () => {
         const harness = await makePlaybackEngine([PlayMode.normal], 0, [subtitle], {
             settings: { lastSubtitleOffset: 375, rememberSubtitleOffset: false },

@@ -800,6 +800,36 @@ export default class PlaybackEngine<T extends IndexedSubtitleModel> {
         return formatAutoPauseResumeModeNotification(autoPauseResumeMode);
     }
 
+    /**
+     * Applies a set of playback settings and play modes in one step, and persists them
+     * together with any extra settings the caller wants saved alongside (used by learning modes).
+     */
+    applyPlaybackPreset(preset: {
+        readonly settings: Partial<AsbplayerSettings>;
+        readonly playModes?: readonly PlayMode[];
+        readonly alsoSave?: Partial<AsbplayerSettings>;
+    }): boolean {
+        if (!this.timingDriver.bound) {
+            asbTrace('playback/preset', 'Ignoring playback preset while unbound');
+            return false;
+        }
+        this.settings = { ...this.settings, ...preset.settings };
+        const planChanged = this.rebuildPlan();
+        this.callbacks.saveSettings({ ...preset.settings, ...preset.alsoSave });
+        if (preset.playModes !== undefined) {
+            this.applyPlaybackModeTransition(this.playbackModeController.setModes(new Set(preset.playModes)), {
+                savePlaybackModes: true,
+                rebuildWhenUnchanged: false,
+            });
+        }
+        asbTrace('playback/preset', 'Applied playback preset', {
+            planChanged,
+            playModes: preset.playModes === undefined ? undefined : [...preset.playModes],
+            settings: Object.keys(preset.settings),
+        });
+        return true;
+    }
+
     toggleSubtitleVisibility(): SubtitleVisibilityNotification | undefined {
         if (!this.timingDriver.bound) {
             asbTrace('playback/subtitles', 'Ignoring subtitle visibility toggle while unbound');

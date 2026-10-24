@@ -180,7 +180,11 @@
         "jumpToNextToken": "Jump to next {{type}} word",
         "jumpToPreviousToken": "Jump to previous {{type}} word",
         "jumpToTokenHelperText": "Use these shortcuts with Yomitan's 'Scan selected text' shortcut for keyboard only control and lookups.",
-        "openStatistics": "統計を開く"
+        "openStatistics": "統計を開く",
+        "cycleLearningMode": "Cycle learning mode (Mandarin Edition)",
+        "markLineGotIt": "Mark hidden line as understood (Mandarin Edition)",
+        "markLineMissed": "Mark hidden line as missed (Mandarin Edition)",
+        "revealLine": "Reveal the hidden line (Mandarin Edition)"
     },
     "controls": {
         "autoPauseMode": "自動一時停止",
@@ -814,5 +818,18 @@
         "categoryDrama": "Drama",
         "episodeRegex": "カスタム話数正規表現",
         "episodeRegexHint": "ページタイトルから話数を検出し、ファイルを自動で絞り込みます。1番目のキャプチャグループが話数で、一致しない場合は組み込みルールを使用します。Enterで適用。"
+    },
+    "mandarin": {
+        "mode": {
+            "off": "Learning off",
+            "justWatch": "Just Watch",
+            "ears": "Ears",
+            "listenFirst": "Listen First"
+        },
+        "modeChanged": "Mode: {{mode}}",
+        "gotIt": "Got it",
+        "missed": "Missed",
+        "alreadyRevealed": "Text was already shown, so this line is not counted",
+        "nothingToReveal": "No line to reveal yet"
     }
 }

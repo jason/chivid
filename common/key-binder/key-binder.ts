@@ -127,6 +127,12 @@ export interface KeyBinder {
         disabledGetter: () => boolean,
         capture?: boolean
     ): () => void;
+    bindLearningShortcut(
+        name: 'cycleLearningMode' | 'markLineGotIt' | 'markLineMissed' | 'revealLine',
+        onShortcut: (event: KeyboardEvent) => void,
+        disabledGetter: () => boolean,
+        capture?: boolean
+    ): () => void;
     bindToggleSubtitleVisibility(
         onToggleSubtitleVisibility: (event: KeyboardEvent) => void,
         disabledGetter: () => boolean,
@@ -1013,6 +1019,30 @@ export class DefaultKeyBinder implements KeyBinder {
             }
 
             onToggleSubtitleVisibility(event);
+            return true;
+        };
+
+        return this._bind(shortcut, capture, handler);
+    }
+
+    bindLearningShortcut(
+        name: 'cycleLearningMode' | 'markLineGotIt' | 'markLineMissed' | 'revealLine',
+        onShortcut: (event: KeyboardEvent) => void,
+        disabledGetter: () => boolean,
+        capture = false
+    ) {
+        const shortcut = this.keyBindSet[name].keys;
+
+        if (!shortcut) {
+            return () => {};
+        }
+
+        const handler = (event: KeyboardEvent) => {
+            if (disabledGetter()) {
+                return false;
+            }
+
+            onShortcut(event);
             return true;
         };
 
