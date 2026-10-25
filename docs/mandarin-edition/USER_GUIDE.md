@@ -7,29 +7,31 @@
 3. Open a Mandarin video (YouTube with Chinese captions, or any page with a `<video>`) and load Chinese subtitles the usual asbplayer way.
 4. Press **Shift+L** to pick a learning mode.
 
-## Modes
+## Modes are recipes
 
-| Mode | Text | Use it to |
-| --- | --- | --- |
-| Off | Your normal asbplayer settings | Watch as before |
-| Just Watch | Shown when due | Enjoy the show, read along |
-| Ears | Hidden, even when paused, until you press R | Train listening |
-| Listen First | Hidden until R; pauses at the end of each line | Deliberate practice, line by line |
+Turning the edition on adds three [recipes](https://docs.asbplayer.dev/docs/guides/recipes) after any you already have, and binds Shift+L to the next recipe if that key is free. A recipe never overwrites your settings; it is layered on top while it is active, and **Off** (Disabled) gives you exactly your own settings back.
 
-Switching modes never touches Anki, annotation or key-binding settings. Returning to Off restores your own playback settings.
+| Recipe | Icon | Text | Use it to |
+| --- | --- | --- | --- |
+| Off | sliders, grey | Your normal settings | Watch as before |
+| Just Watch | eye | Shown when due | Enjoy the show, read along |
+| Ears | ear | Hidden, even when paused, until you press R | Train listening |
+| Listen First | ear with a pause | Hidden until R; pauses at the end of each line | Deliberate practice, line by line |
+
+The active recipe shows as its icon on the video controls; hover for its name, click for the list. You can edit these recipes or add your own in Settings → Playback; any recipe can include **Hide text until revealed**.
 
 ## Keys (all remappable in Settings → Keyboard Shortcuts)
 
 | Key | Does |
 | --- | --- |
-| Shift+L | Next learning mode |
+| Shift+L | Next recipe |
 | R | Reveal the current line |
 | G | I understood the line I just heard |
 | H | I missed it |
 | [ | Mark the start of a segment; while looping, replay it once more without text |
 | ] | Mark the end and loop the segment with text hidden; press again to stop |
 
-G and H only count for a line whose text you have not seen. After a Reveal, or in Just Watch where text is on screen, the press is refused and nothing is recorded. That rule is what makes the numbers mean "understood by ear".
+G and H only count for a line whose text you have not seen. After a Reveal, or with Just Watch where text is on screen, the press is refused and nothing is recorded. That rule is what makes the numbers mean "understood by ear".
 
 ## Your learning ledger
 

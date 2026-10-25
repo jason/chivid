@@ -15,7 +15,8 @@ Needs Playwright with Chromium and `python3`. `make-fixtures.sh` regenerates the
 | # | Journey | What it proves |
 | --- | --- | --- |
 | 1 | Edition off | Stock behavior: subtitles show when due; G, H, R, [, ], Shift+L do nothing; no ledger |
-| 2 | Cycle modes | Shift+L goes Off → Just Watch → Ears → Listen First → Off; Listen First turns on auto-pause; Off restores the learner's own four playback settings |
+| 2a | Turn the edition on | The settings switch appends Just Watch, Ears, Listen First after the learner's own recipe and binds Shift+L |
+| 2b | Cycle recipes | Shift+L shows each recipe with the right text visibility; the learner's own settings are never written |
 | 3a | Ears, hidden text | Text stays hidden while playing and after pausing; R reveals it |
 | 3b | Ears, honesty rule | G on a hidden line writes one ledger event with sentence, time and source; G after Reveal writes nothing |
 | 3c | Ears, change of mind | H then H then G records missed, got (no duplicate) |
@@ -23,9 +24,9 @@ Needs Playwright with Chromium and `python3`. `make-fixtures.sh` regenerates the
 | 4 | Just Watch | Text is visible, so G is refused and nothing is recorded |
 | 5 | Segment loop | [ and ] loop lines 1–2 with text hidden even in Just Watch; [ while looping gives a clean pass; ] stops and text returns |
 | 6 | Export to tutor | Settings → Misc → Export learning ledger downloads JSONL; `tools/ledger_to_lesson.py` turns it into the "From last night" block |
+| 7 | On-video mode button | The active recipe's icon and label; the vertical menu is fully visible; choosing Just Watch saves it and shows the line |
 
 A mutation check was run when these were written: disabling the "revealed lines cannot be
 counted" rule makes journeys 3b and 4 fail.
 
-Not covered here: the on-video mode pill (the controls overlay is disabled in these runs),
-and real streaming sites. Spot-check YouTube and Netflix by hand before a release.
+Not covered here: real streaming sites. Spot-check YouTube and Netflix by hand before a release.

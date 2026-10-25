@@ -119,8 +119,9 @@ export default function LearningModeButton({
     };
 
     const select = (index: number | null) => {
-        setMenuOpen(false);
+        // Select before closing: closing lets the overlay frame shrink and refresh.
         if (index !== (activeRecipeId ?? null)) onRecipeSelected(index);
+        setMenuOpen(false);
     };
 
     return (

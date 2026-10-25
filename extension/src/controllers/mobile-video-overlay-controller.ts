@@ -167,8 +167,12 @@ export class MobileVideoOverlayController {
                     this._playModeSelectorOpen = true;
                     this._setFrameHeight(menu.height);
                 } else {
+                    // Restore the size in place. Upstream's selector-closed path rebuilds the frame,
+                    // which would cut off the overlay's in-flight settings save for the chosen recipe.
                     this._setFrameHeight(this._frameParams?.height);
-                    this._playModeSelectorClosed();
+                    this._playModeSelectorOpen = false;
+                    if (!this._context.video.paused) this._doHide();
+                    void this.updateModel();
                 }
             } else if (message.message.command === 'playback-mode-selector-opened') {
                 this._playModeSelectorOpen = true;
