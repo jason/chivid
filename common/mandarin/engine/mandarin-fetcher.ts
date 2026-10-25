@@ -23,6 +23,8 @@ export interface MandarinEngineParts {
     readonly segmenter: Segmenter;
     readonly contextPinyin: ContextPinyin;
     readonly overrides?: ReadonlyMap<string, string>;
+    /** Characters the learner reads without help: their pinyin is left out of the ruby. */
+    readonly knownCharacters?: string;
 }
 
 const exactSource = (term: string) => ({
@@ -50,9 +52,19 @@ const headword = (term: string, reading: string): TermHeadword => ({
  */
 export class MandarinEngine {
     private readonly parts: MandarinEngineParts;
+    private knownCharacters: string;
+    private known: ReadonlySet<string>;
 
     constructor(parts: MandarinEngineParts) {
         this.parts = parts;
+        this.knownCharacters = parts.knownCharacters ?? '';
+        this.known = new Set(this.knownCharacters);
+    }
+
+    setKnownCharacters(chars: string) {
+        if (chars === this.knownCharacters) return;
+        this.knownCharacters = chars;
+        this.known = new Set(chars);
     }
 
     tokenize(text: string, index: number): TokenizeResult {
@@ -61,13 +73,17 @@ export class MandarinEngine {
         const content: TokenPartResult[][] = tokens.map((token) => {
             if (!token.isWord) return [{ text: token.text, reading: '' }];
             const reading = token.parts.map((part) => part.reading).join('');
-            return token.parts.map((part, i) => ({
-                text: part.text,
-                // A reading the engine could not confirm is shown with a question mark, never as fact.
-                reading:
-                    token.uncertain && part.reading && i === token.parts.length - 1 ? `${part.reading}?` : part.reading,
-                ...(i === 0 ? { headwords: [[headword(token.text, reading)]] } : {}),
-            }));
+            return token.parts.map((part, i) => {
+                // Known characters carry no ruby: pinyin appears only where the learner needs it.
+                // The headword keeps the whole word's reading for the dictionary popup.
+                const shown = this.known.has(part.text) ? '' : part.reading;
+                return {
+                    text: part.text,
+                    // A reading the engine could not confirm is shown with a question mark, never as fact.
+                    reading: token.uncertain && shown && i === token.parts.length - 1 ? `${shown}?` : shown,
+                    ...(i === 0 ? { headwords: [[headword(token.text, reading)]] } : {}),
+                };
+            });
         });
         return { id: 'mandarin', source: 'scanning-parser', dictionary: dictionaryName, index, content };
     }

@@ -143,6 +143,8 @@ export interface MiscSettings {
     readonly mandarinEditionEnabled: boolean;
     /** Mandarin Edition: keep each line's text hidden, even while paused, until it is revealed. Carried by recipes. */
     readonly hideUntilRevealed: boolean;
+    /** Mandarin Edition: Han characters the learner reads without help; the engine shows no pinyin over them. */
+    readonly mandarinKnownCharacters: string;
 }
 
 export type AutoPausePreferenceEdge = AutoPausePreference.atStart | AutoPausePreference.atEnd;

@@ -198,7 +198,7 @@ export default defineBackground(() => {
         new TakeScreenshotHandler(imageCapturer, cardPublisher),
         new ToggleSubtitlesHandler(settings, tabRegistry),
         new SyncHandler(tabRegistry),
-        new HttpPostHandler(),
+        new HttpPostHandler(settings),
         new ToggleSidePanelHandler(tabRegistry),
         new OpenStatisticsHandler(tabRegistry),
         new OpenStatisticsOverlayHandler(tabRegistry),

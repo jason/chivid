@@ -1041,6 +1041,9 @@ const settingsSchema = {
         hideUntilRevealed: {
             type: 'boolean',
         },
+        mandarinKnownCharacters: {
+            type: 'string',
+        },
         subtitleAboveThumbnail: {
             type: 'boolean',
         },

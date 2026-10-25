@@ -42,6 +42,23 @@ describe('MandarinFetcher through upstream Yomitan client', () => {
         client.verifyTokenizeResult('我觉得这个便宜的银行不太好。', tokens);
     });
 
+    it('leaves known characters without pinyin, keeping the word reading for the popup', () => {
+        const knowing = new MandarinEngine({
+            dictionary: testDictionary(),
+            segmenter: nodeSegmenter,
+            contextPinyin: pinyinProContext,
+            knownCharacters: '银',
+        });
+        const content = knowing.tokenize('银行', 0).content;
+        expect(content[0].map(({ text, reading }) => ({ text, reading }))).toEqual([
+            { text: '银', reading: '' },
+            { text: '行', reading: 'háng' },
+        ]);
+        expect(content[0][0].headwords?.[0][0].reading).toBe('yínháng');
+        knowing.setKnownCharacters('银行');
+        expect(knowing.tokenize('银行', 0).content[0].map((p) => p.reading)).toEqual(['', '']);
+    });
+
     it('tokenizes several lines in one request and caches each line', async () => {
         const client = yomitan();
         await client.version();

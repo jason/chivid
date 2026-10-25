@@ -1,3 +1,4 @@
+import { defaultKnownCharacters, engineUrlForKnownCharacters } from '@project/common/mandarin/known-characters';
 import { describe, expect, it } from '@jest/globals';
 import { defaultSettings, normalizeRecipe } from '@project/common/settings';
 import { mandarinRecipeId, mandarinRecipes, settingsForEnablingMandarin } from '@project/common/mandarin/recipes';
@@ -53,7 +54,7 @@ describe('Mandarin recipes', () => {
     it('points track 1 at the built-in engine with pinyin on hover for words not yet known', () => {
         const change = settingsForEnablingMandarin(defaultSettings);
         const track = change.dictionaryTracks![0];
-        expect(track.dictionaryYomitanUrl).toBe('local://mandarin');
+        expect(track.dictionaryYomitanUrl).toBe(engineUrlForKnownCharacters(defaultKnownCharacters()));
         expect(track.dictionaryTokenAnnotationConfig.video.reading.onHoverEnabled).toBe(true);
         expect(track.dictionaryTokenAnnotationConfig.onStatuses.map((s) => s.reading)).toEqual([
             true,
@@ -73,5 +74,12 @@ describe('Mandarin recipes', () => {
             dictionaryTracks: [ownYomitan, ...defaultSettings.dictionaryTracks.slice(1)],
         });
         expect(change.dictionaryTracks).toBeUndefined();
+    });
+
+    it('seeds HSK 1-2 as known characters the first time only', () => {
+        expect(settingsForEnablingMandarin(defaultSettings).mandarinKnownCharacters).toBe(defaultKnownCharacters());
+        const again = settingsForEnablingMandarin({ ...defaultSettings, mandarinKnownCharacters: '我' });
+        expect(again.mandarinKnownCharacters).toBeUndefined();
+        expect(again.dictionaryTracks![0].dictionaryYomitanUrl).toBe(engineUrlForKnownCharacters('我'));
     });
 });

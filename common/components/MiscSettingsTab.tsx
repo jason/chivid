@@ -39,6 +39,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import UploadIcon from '@mui/icons-material/Upload';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import NoWrapButton from '@project/common/components/NoWrapButton';
+import { settingsForKnownCharacters } from '@project/common/mandarin/known-characters';
 import MandarinSettingsSection from '@project/common/components/MandarinSettingsSection';
 import { settingsForEnablingMandarin } from '@project/common/mandarin/recipes';
 import { useTheme } from '@mui/material/styles';
@@ -212,6 +213,10 @@ const MiscSettingTab: React.FC<Props> = ({
                                 : void onSettingChanged('mandarinEditionEnabled', false)
                         }
                         canExportLedger={!insideApp}
+                        knownCharacters={settings.mandarinKnownCharacters}
+                        onKnownCharactersChanged={(chars) =>
+                            onSettingsChanged(settingsForKnownCharacters(settings, chars))
+                        }
                     />
                 )}
 

@@ -1,5 +1,6 @@
 import type { Command, HttpPostMessage, Message } from '@project/common';
 import { asbError } from '@project/common/util/log';
+import type { SettingsProvider } from '@project/common/settings';
 import { isMandarinEngineUrl } from '@project/common/mandarin/engine/mandarin-fetcher';
 import { mandarinEngine } from '@project/extension/src/services/mandarin-engine-service';
 
@@ -27,7 +28,11 @@ const allowedActions = [
 ];
 
 export default class HttpPostHandler {
-    constructor() {}
+    private readonly settings: Pick<SettingsProvider, 'getSingle'>;
+
+    constructor(settings: Pick<SettingsProvider, 'getSingle'>) {
+        this.settings = settings;
+    }
 
     get sender() {
         return ['asbplayer-video', 'asbplayer-video-tab', 'asbplayer-popup'];
@@ -43,8 +48,11 @@ export default class HttpPostHandler {
         if (isMandarinEngineUrl(message.url)) {
             // Mandarin Edition: answer Yomitan requests from the built-in engine, not the network.
             const action = message.url.split('/').pop() ?? '';
-            void mandarinEngine()
-                .then((engine) => sendResponse(engine.handle(action, message.body)))
+            void Promise.all([mandarinEngine(), this.settings.getSingle('mandarinKnownCharacters')])
+                .then(([engine, known]) => {
+                    engine.setKnownCharacters(known);
+                    sendResponse(engine.handle(action, message.body));
+                })
                 .catch((e) => sendResponse({ error: e instanceof Error ? e.message : String(e) }));
             return true;
         }

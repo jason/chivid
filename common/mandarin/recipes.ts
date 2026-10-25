@@ -1,3 +1,4 @@
+import { defaultKnownCharacters, engineUrlForKnownCharacters } from '@project/common/mandarin/known-characters';
 import { AutoPausePreference, PlayMode } from '@project/common/src/model';
 import { AutoPauseResumeMode, SubtitleVisibility } from '@project/common/settings/settings';
 import type { AsbplayerSettings } from '@project/common/settings/settings';
@@ -51,11 +52,12 @@ export const recipeCycleShortcut = { keys: 'shift+L' };
  * Points a subtitle track's annotation at the built-in Mandarin engine, with pinyin shown on
  * hover for words that are not yet known (uncollected, unknown, learning) and nothing else added.
  */
-export const mandarinEngineTrack = (track: DictionaryTrack): DictionaryTrack => {
+export const mandarinEngineTrack = (track: DictionaryTrack, knownCharacters?: string): DictionaryTrack => {
     const config = track.dictionaryTokenAnnotationConfig;
     return {
         ...track,
-        dictionaryYomitanUrl: mandarinEngineUrl,
+        dictionaryYomitanUrl:
+            knownCharacters === undefined ? mandarinEngineUrl : engineUrlForKnownCharacters(knownCharacters),
         dictionaryYomitanParser: 'scanning-parser',
         dictionaryTokenAnnotationConfig: {
             ...config,
@@ -69,8 +71,12 @@ export const mandarinEngineTrack = (track: DictionaryTrack): DictionaryTrack => 
 };
 
 export const settingsForEnablingMandarin = (
-    settings: Pick<AsbplayerSettings, 'recipes' | 'keyBindSet'> & Partial<Pick<AsbplayerSettings, 'dictionaryTracks'>>
+    settings: Pick<AsbplayerSettings, 'recipes' | 'keyBindSet'> &
+        Partial<Pick<AsbplayerSettings, 'dictionaryTracks' | 'mandarinKnownCharacters'>>
 ): Partial<AsbplayerSettings> => {
+    // First enable: start from HSK 1-2, so pinyin appears only over characters past that level.
+    const seedKnown = !settings.mandarinKnownCharacters;
+    const known = seedKnown ? defaultKnownCharacters() : settings.mandarinKnownCharacters;
     const existingNames = new Set(settings.recipes.map((recipe) => recipe.name));
     const missing = mandarinRecipes
         .filter((recipe) => !existingNames.has(recipe.name))
@@ -87,7 +93,10 @@ export const settingsForEnablingMandarin = (
         tracks !== undefined && tracks[0]?.dictionaryYomitanUrl === defaultDictionaryTracks[0].dictionaryYomitanUrl;
     return {
         mandarinEditionEnabled: true,
-        ...(firstTrackIsDefault ? { dictionaryTracks: [mandarinEngineTrack(tracks[0]), ...tracks.slice(1)] } : {}),
+        ...(seedKnown ? { mandarinKnownCharacters: known } : {}),
+        ...(firstTrackIsDefault
+            ? { dictionaryTracks: [mandarinEngineTrack(tracks[0], known), ...tracks.slice(1)] }
+            : {}),
         ...(missing.length > 0 ? { recipes: [...settings.recipes, ...missing] } : {}),
         ...(cycleIsFree ? { keyBindSet: { ...settings.keyBindSet, cycleRecipesForward: recipeCycleShortcut } } : {}),
     };

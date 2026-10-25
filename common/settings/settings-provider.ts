@@ -88,6 +88,7 @@ export const defaultSettings: AsbplayerSettings = {
     thumbnailPreview: false,
     mandarinEditionEnabled: false,
     hideUntilRevealed: false,
+    mandarinKnownCharacters: '',
     subtitleTracksV2: [],
     subtitlesWidth: -1,
     subtitlesWidthUnit: '%',

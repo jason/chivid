@@ -27,8 +27,11 @@ const cedictVersion = JSON.parse(readFileSync(join(dirname(cedictPath), 'package
 writeFileSync(
     join(out, 'ATTRIBUTION.txt'),
     `CC-CEDICT (cedict-json ${cedictVersion}), https://cc-cedict.org, licensed CC BY-SA 4.0.\n` +
-        `jieba-rs (jieba-wasm), MIT License.\n`
+        `jieba-rs (jieba-wasm), MIT License.\n` +
+        `HSK 3.0 character levels (common/mandarin/hsk-characters.ts), derived from drkameleon/complete-hsk-vocabulary, MIT License.\n`
 );
 
 const mb = (file) => (statSync(join(out, file)).size / 1e6).toFixed(1);
-console.log(`mandarin assets: ${Object.keys(packed).length} headwords, cedict.json ${mb('cedict.json')} MB, wasm ${mb('jieba_rs_wasm_bg.wasm')} MB`);
+console.log(
+    `mandarin assets: ${Object.keys(packed).length} headwords, cedict.json ${mb('cedict.json')} MB, wasm ${mb('jieba_rs_wasm_bg.wasm')} MB`
+);
