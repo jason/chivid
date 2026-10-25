@@ -222,6 +222,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.38.0
         version: 8.61.1(eslint@9.32.0(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)
+      cedict-json:
+        specifier: 1.3.20251213
+        version: 1.3.20251213
       eslint:
         specifier: ^9.32.0
         version: 9.32.0(jiti@2.6.1)(supports-color@8.1.1)
@@ -397,6 +400,9 @@ importers:
       i18next-resources-to-backend:
         specifier: ^1.2.1
         version: 1.2.1
+      jieba-wasm:
+        specifier: 2.4.0
+        version: 2.4.0
       jsonschema:
         specifier: ^1.5.0
         version: 1.5.0
@@ -406,6 +412,9 @@ importers:
       pgs-parser:
         specifier: 0.1.0
         version: 0.1.0
+      pinyin-pro:
+        specifier: 3.29.5
+        version: 3.29.5
       react:
         specifier: ^19.1.0
         version: 19.1.0
@@ -576,6 +585,9 @@ importers:
       i18next-resources-to-backend:
         specifier: ^1.2.1
         version: 1.2.1
+      jieba-wasm:
+        specifier: 2.4.0
+        version: 2.4.0
       m3u8-parser:
         specifier: ^7.2.0
         version: 7.2.0
@@ -4406,6 +4418,10 @@ packages:
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
 
+  cedict-json@1.3.20251213:
+    resolution: {integrity: sha512-RVmJrMNhbPjRSKoP68urEEAr06zKH/Cq/+ABVJ8dIq15rTzW5W25NANVy1RMjU/pwX/eZ+yQ02k5RkXRjj6qgg==}
+    engines: {node: '22'}
+
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
@@ -6682,6 +6698,9 @@ packages:
       node-notifier:
         optional: true
 
+  jieba-wasm@2.4.0:
+    resolution: {integrity: sha512-ZvQdS+FGifrFXZIXSgOyOgEz+1wdy1P4vSvwe37FVtku9ycSdHTZbHqF5i9tMN1JucoAmeiLBeI6/YaqcGD+KA==}
+
   jiti@1.21.7:
     resolution: {integrity: sha512-/imKNG4EbWNrVjoNC/1H5/9GFy+tqjGBHCaSsN+P2RnPqjsLmv6UD3Ej+Kj8nBWaRAwyk7kK5ZUc+OEatnTR3A==}
     hasBin: true
@@ -7788,6 +7807,9 @@ packages:
   pino@10.3.1:
     resolution: {integrity: sha512-r34yH/GlQpKZbU1BvFFqOjhISRo1MNx1tWYsYvmj6KIRHSPMT2+yHOEb1SG6NMvRoHRF0a07kCOox/9yakl1vg==}
     hasBin: true
+
+  pinyin-pro@3.29.5:
+    resolution: {integrity: sha512-Fk5YoRmtdHqJWqAuzYVG/NzvzeCbaG+ZEwbY6Nbps3QAIrvQQEtcm49frcyCM8i2b5najnzPDtYqrHRYTTiuwQ==}
 
   pirates@4.0.7:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
@@ -15068,6 +15090,8 @@ snapshots:
 
   ccount@2.0.1: {}
 
+  cedict-json@1.3.20251213: {}
+
   chalk@4.1.2:
     dependencies:
       ansi-styles: 4.3.0
@@ -17998,6 +18022,8 @@ snapshots:
       - supports-color
       - ts-node
 
+  jieba-wasm@2.4.0: {}
+
   jiti@1.21.7: {}
 
   jiti@2.6.1: {}
@@ -19410,6 +19436,8 @@ snapshots:
       safe-stable-stringify: 2.5.0
       sonic-boom: 4.2.0
       thread-stream: 4.2.0
+
+  pinyin-pro@3.29.5: {}
 
   pirates@4.0.7: {}
 

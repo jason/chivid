@@ -1,0 +1,145 @@
+import type { Fetcher } from '@project/common';
+import type { MandarinDictionary } from '@project/common/mandarin/engine/dictionary';
+import { markReading } from '@project/common/mandarin/engine/pinyin';
+import { preferredReading, resolveLine } from '@project/common/mandarin/engine/readings';
+import type { ContextPinyin, Segmenter } from '@project/common/mandarin/engine/readings';
+import type {
+    TermDictionaryEntry,
+    TermEntriesResult,
+    TermHeadword,
+    TokenizeResult,
+    TokenPartResult,
+} from '@project/common/yomitan';
+
+export { isMandarinEngineUrl, mandarinEngineUrl } from '@project/common/mandarin/engine/engine-url';
+
+const dictionaryName = 'CC-CEDICT';
+
+/** Reports the newest yomitan-api feature level, so the client uses bulk requests. */
+const engineVersion = '26.7.21.0';
+
+export interface MandarinEngineParts {
+    readonly dictionary: MandarinDictionary;
+    readonly segmenter: Segmenter;
+    readonly contextPinyin: ContextPinyin;
+    readonly overrides?: ReadonlyMap<string, string>;
+}
+
+const exactSource = (term: string) => ({
+    originalText: term,
+    transformedText: term,
+    deinflectedText: term,
+    matchType: 'exact' as const,
+    matchSource: 'term' as const,
+    isPrimary: true,
+});
+
+const headword = (term: string, reading: string): TermHeadword => ({
+    index: 0,
+    headwordIndex: 0,
+    term,
+    reading,
+    sources: [exactSource(term)],
+    frequencies: [],
+});
+
+/**
+ * The Mandarin Edition engine, speaking the three yomitan-api actions asbplayer's Yomitan
+ * client uses (tokenize, termEntries, yomitanVersion), so every annotation feature upstream
+ * builds on Yomitan works for Chinese without a Yomitan install.
+ */
+export class MandarinEngine {
+    private readonly parts: MandarinEngineParts;
+
+    constructor(parts: MandarinEngineParts) {
+        this.parts = parts;
+    }
+
+    tokenize(text: string, index: number): TokenizeResult {
+        const { dictionary, segmenter, contextPinyin, overrides } = this.parts;
+        const tokens = resolveLine(text, segmenter, dictionary, contextPinyin, overrides);
+        const content: TokenPartResult[][] = tokens.map((token) => {
+            if (!token.isWord) return [{ text: token.text, reading: '' }];
+            const reading = token.parts.map((part) => part.reading).join('');
+            return token.parts.map((part, i) => ({
+                text: part.text,
+                // A reading the engine could not confirm is shown with a question mark, never as fact.
+                reading:
+                    token.uncertain && part.reading && i === token.parts.length - 1 ? `${part.reading}?` : part.reading,
+                ...(i === 0 ? { headwords: [[headword(token.text, reading)]] } : {}),
+            }));
+        });
+        return { id: 'mandarin', source: 'scanning-parser', dictionary: dictionaryName, index, content };
+    }
+
+    termEntries(term: string, index: number): TermEntriesResult {
+        const { dictionary } = this.parts;
+        const preferred = preferredReading(term);
+        const readings = dictionary.readings(term);
+        const ordered = preferred
+            ? [preferred, ...readings.filter((r) => r.toLowerCase() !== preferred.toLowerCase())]
+            : readings;
+        const entries = dictionary.lookup(term);
+        const dictionaryEntries: TermDictionaryEntry[] = ordered.map((reading, readingIndex) => {
+            const glosses = entries
+                .filter((e) => e.pinyin.toLowerCase() === reading.toLowerCase())
+                .flatMap((e) => e.glosses);
+            return {
+                headwords: [headword(term, markReading(reading))],
+                frequencies: [],
+                pronunciations: [],
+                definitions: [
+                    {
+                        index: readingIndex,
+                        headwordIndices: [0],
+                        dictionary: dictionaryName,
+                        dictionaryIndex: 0,
+                        dictionaryAlias: dictionaryName,
+                        id: readingIndex,
+                        score: 0,
+                        frequencyOrder: 0,
+                        sequences: [],
+                        isPrimary: true,
+                        tags: [],
+                        entries: glosses,
+                    },
+                ],
+            };
+        });
+        return { dictionaryEntries, originalTextLength: [...term].length, index };
+    }
+
+    handle(action: string, body: { text?: string | string[]; term?: string | string[] } | null): unknown {
+        switch (action) {
+            case 'yomitanVersion':
+                return { version: engineVersion };
+            case 'tokenize': {
+                const text = body?.text;
+                if (Array.isArray(text)) return text.map((t, i) => this.tokenize(t, i));
+                return [this.tokenize(text ?? '', 0)];
+            }
+            case 'termEntries': {
+                const term = body?.term;
+                if (Array.isArray(term)) return term.map((t, i) => this.termEntries(t, i));
+                return this.termEntries(term ?? '', 0);
+            }
+            default:
+                // asbplayer only uses the three actions above; anything else is a programming error.
+                return { error: `Unsupported action ${action}` };
+        }
+    }
+}
+
+/** A Fetcher for upstream's Yomitan client that answers from a MandarinEngine instead of HTTP. */
+export class MandarinFetcher implements Fetcher {
+    private readonly engine: () => Promise<MandarinEngine>;
+
+    constructor(engine: () => Promise<MandarinEngine>) {
+        this.engine = engine;
+    }
+
+    async fetch(url: string, body: any) {
+        const action = url.split('/').pop() ?? '';
+        return (await this.engine()).handle(action, body);
+    }
+}

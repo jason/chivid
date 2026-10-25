@@ -49,4 +49,29 @@ describe('Mandarin recipes', () => {
         expect(mandarinRecipeId({ name: 'My recipe' })).toBeUndefined();
         expect(mandarinRecipeId(undefined)).toBeUndefined();
     });
+
+    it('points track 1 at the built-in engine with pinyin on hover for words not yet known', () => {
+        const change = settingsForEnablingMandarin(defaultSettings);
+        const track = change.dictionaryTracks![0];
+        expect(track.dictionaryYomitanUrl).toBe('local://mandarin');
+        expect(track.dictionaryTokenAnnotationConfig.video.reading.onHoverEnabled).toBe(true);
+        expect(track.dictionaryTokenAnnotationConfig.onStatuses.map((s) => s.reading)).toEqual([
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+        ]);
+        expect(change.dictionaryTracks!.slice(1)).toEqual(defaultSettings.dictionaryTracks.slice(1));
+    });
+
+    it('leaves a track the learner already pointed at their own Yomitan', () => {
+        const ownYomitan = { ...defaultSettings.dictionaryTracks[0], dictionaryYomitanUrl: 'http://127.0.0.1:9999' };
+        const change = settingsForEnablingMandarin({
+            ...defaultSettings,
+            dictionaryTracks: [ownYomitan, ...defaultSettings.dictionaryTracks.slice(1)],
+        });
+        expect(change.dictionaryTracks).toBeUndefined();
+    });
 });

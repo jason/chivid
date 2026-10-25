@@ -1,3 +1,4 @@
+import '@project/extension/src/ui/register-mandarin-fetcher';
 import { renderSettingsUi } from '@/ui/settings';
 import { configureExtensionLogProvider } from '@/services/extension-log-provider';
 

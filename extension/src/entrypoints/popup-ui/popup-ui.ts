@@ -1,3 +1,4 @@
+import '@project/extension/src/ui/register-mandarin-fetcher';
 import { asbError } from '@project/common/util/log';
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage';
 import { renderPopupUi } from '@/ui/popup';

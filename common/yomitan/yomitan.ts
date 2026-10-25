@@ -11,6 +11,7 @@ import {
 import type { Fetcher, Progress } from '@project/common';
 import { HttpFetcher } from '@project/common';
 import type { DictionaryTrack } from '@project/common/settings';
+import { fetcherForYomitanUrl } from '@project/common/mandarin/engine/engine-url';
 import { coerce, lt, gte } from 'semver';
 
 const TOKENIZE_BATCH_SIZE = 100; // 1k can cause 1.5GB memory on Yomitan for subtitles, Anki cards may be larger too
@@ -419,7 +420,12 @@ export class Yomitan {
         options?: { lemmaTokenFallback: boolean; tokensWereModified: (token: string) => void }
     ) {
         this.dt = dictionaryTrack;
-        this.fetcher = fetcher;
+        // Mandarin Edition: extension pages reach the built-in engine through a registered fetcher.
+        this.fetcher = fetcherForYomitanUrl(
+            dictionaryTrack.dictionaryYomitanUrl,
+            fetcher,
+            fetcher instanceof HttpFetcher
+        );
         this.asyncSemaphore = new AsyncSemaphore({ permits: 1 });
         this.tokenizeCache = new Map();
         this.lemmatizeCache = new Map();

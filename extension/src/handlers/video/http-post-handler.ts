@@ -1,5 +1,7 @@
 import type { Command, HttpPostMessage, Message } from '@project/common';
 import { asbError } from '@project/common/util/log';
+import { isMandarinEngineUrl } from '@project/common/mandarin/engine/mandarin-fetcher';
+import { mandarinEngine } from '@project/extension/src/services/mandarin-engine-service';
 
 const allowedKeys = ['version', 'action', 'params', 'key', 'text', 'scanLength', 'parser', 'term'];
 const allowedActions = [
@@ -37,6 +39,15 @@ export default class HttpPostHandler {
 
     handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
         const message = command.message as HttpPostMessage;
+
+        if (isMandarinEngineUrl(message.url)) {
+            // Mandarin Edition: answer Yomitan requests from the built-in engine, not the network.
+            const action = message.url.split('/').pop() ?? '';
+            void mandarinEngine()
+                .then((engine) => sendResponse(engine.handle(action, message.body)))
+                .catch((e) => sendResponse({ error: e instanceof Error ? e.message : String(e) }));
+            return true;
+        }
 
         if (!this._validateBody(message.body)) {
             sendResponse({ error: 'Invalid request' });

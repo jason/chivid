@@ -1,0 +1,25 @@
+{
+    "about": "Held-out lines, written after the rules were tuned on gold-sentences.json and scored once before any fix, to estimate accuracy on unseen subtitles. Not used for tuning.",
+    "sentences": [
+        { "text": "你吃饭了没有？", "pinyin": "nǐ chī fàn le méi yǒu" },
+        { "text": "我们下个星期见。", "pinyin": "wǒ men xià ge xīng qī jiàn" },
+        { "text": "这部电影太好看了！", "pinyin": "zhè bù diàn yǐng tài hǎo kàn le" },
+        { "text": "他说得对。", "pinyin": "tā shuō de duì" },
+        { "text": "你得早点儿睡觉。", "pinyin": "nǐ děi zǎo diǎn r shuì jiào" },
+        { "text": "我把钥匙忘在家里了。", "pinyin": "wǒ bǎ yào shi wàng zài jiā lǐ le" },
+        { "text": "你怎么还在这儿？", "pinyin": "nǐ zěn me hái zài zhè r" },
+        { "text": "他的中文说得越来越好。", "pinyin": "tā de zhōng wén shuō de yuè lái yuè hǎo" },
+        { "text": "别担心，没问题。", "pinyin": "bié dān xīn méi wèn tí" },
+        { "text": "我一下子就明白了。", "pinyin": "wǒ yí xià zi jiù míng bai le" },
+        { "text": "这个地方我来过。", "pinyin": "zhè ge dì fang wǒ lái guo" },
+        { "text": "你能不能帮我一个忙？", "pinyin": "nǐ néng bu néng bāng wǒ yí ge máng" },
+        { "text": "上海的天气怎么样？", "pinyin": "shàng hǎi de tiān qì zěn me yàng" },
+        { "text": "我觉得他说的不对。", "pinyin": "wǒ jué de tā shuō de bú duì" },
+        { "text": "孩子们在外面玩儿。", "pinyin": "hái zi men zài wài miàn wán r" },
+        { "text": "他把车开走了。", "pinyin": "tā bǎ chē kāi zǒu le" },
+        { "text": "你喜欢什么颜色？", "pinyin": "nǐ xǐ huan shén me yán sè" },
+        { "text": "我们一边吃一边聊。", "pinyin": "wǒ men yì biān chī yì biān liáo" },
+        { "text": "你看起来很累。", "pinyin": "nǐ kàn qǐ lái hěn lèi" },
+        { "text": "谢谢你的帮助。", "pinyin": "xiè xie nǐ de bāng zhù" }
+    ]
+}

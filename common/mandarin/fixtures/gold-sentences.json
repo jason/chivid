@@ -1,0 +1,215 @@
+{
+    "about": "Reference readings for the Mandarin engine. Each line is a realistic subtitle; 'pinyin' lists one syllable per Han character in order (tone marks, neutral tone unmarked, 不/一 tone changes applied as spoken). humanVerified stays false until a native speaker or tutor confirms the line; CI asserts only on verified lines, and reports the rest.",
+    "sentences": [
+        {
+            "text": "我觉得这个便宜的银行不太好。",
+            "pinyin": "wǒ jué de zhè ge pián yi de yín háng bú tài hǎo",
+            "covers": ["觉得", "便宜", "银行", "不"],
+            "humanVerified": false
+        },
+        {
+            "text": "他跑得很快，你得去。",
+            "pinyin": "tā pǎo de hěn kuài nǐ děi qù",
+            "covers": ["得 de", "得 děi"],
+            "humanVerified": false
+        },
+        {
+            "text": "我得了一百分。",
+            "pinyin": "wǒ dé le yì bǎi fēn",
+            "covers": ["得 dé", "一"],
+            "humanVerified": false
+        },
+        {
+            "text": "我吃了饭，受不了了。",
+            "pinyin": "wǒ chī le fàn shòu bù liǎo le",
+            "covers": ["了 le", "了 liǎo"],
+            "humanVerified": false
+        },
+        {
+            "text": "这个问题我了解了。",
+            "pinyin": "zhè ge wèn tí wǒ liǎo jiě le",
+            "covers": ["了解"],
+            "humanVerified": false
+        },
+        {
+            "text": "重庆的银行行长长大了。",
+            "pinyin": "chóng qìng de yín háng háng zhǎng zhǎng dà le",
+            "covers": ["重庆", "行长", "长大"],
+            "humanVerified": false
+        },
+        {
+            "text": "他长得很高。",
+            "pinyin": "tā zhǎng de hěn gāo",
+            "covers": ["长 zhǎng"],
+            "humanVerified": false
+        },
+        {
+            "text": "这条路很长。",
+            "pinyin": "zhè tiáo lù hěn cháng",
+            "covers": ["长 cháng"],
+            "humanVerified": false
+        },
+        {
+            "text": "一个人不去。",
+            "pinyin": "yí ge rén bú qù",
+            "covers": ["一", "不"],
+            "humanVerified": false
+        },
+        {
+            "text": "一样不一样？",
+            "pinyin": "yí yàng bu yí yàng",
+            "covers": ["一", "不 in A-not-A"],
+            "humanVerified": false
+        },
+        {
+            "text": "第一次来中国。",
+            "pinyin": "dì yī cì lái zhōng guó",
+            "covers": ["第一"],
+            "humanVerified": false
+        },
+        {
+            "text": "他慢慢地走过来。",
+            "pinyin": "tā màn màn de zǒu guò lái",
+            "covers": ["地 de"],
+            "humanVerified": false
+        },
+        {
+            "text": "地上有一本书。",
+            "pinyin": "dì shang yǒu yì běn shū",
+            "covers": ["地 dì", "一"],
+            "humanVerified": false
+        },
+        {
+            "text": "你看着我。",
+            "pinyin": "nǐ kàn zhe wǒ",
+            "covers": ["着 zhe"],
+            "humanVerified": false
+        },
+        {
+            "text": "我睡着了。",
+            "pinyin": "wǒ shuì zháo le",
+            "covers": ["着 zháo"],
+            "humanVerified": false
+        },
+        {
+            "text": "别着急，慢慢来。",
+            "pinyin": "bié zháo jí màn màn lái",
+            "covers": ["着急"],
+            "humanVerified": false
+        },
+        {
+            "text": "你还没吃饭吗？",
+            "pinyin": "nǐ hái méi chī fàn ma",
+            "covers": ["还 hái"],
+            "humanVerified": false
+        },
+        {
+            "text": "我明天还书。",
+            "pinyin": "wǒ míng tiān huán shū",
+            "covers": ["还 huán"],
+            "humanVerified": false
+        },
+        {
+            "text": "他们都到了。",
+            "pinyin": "tā men dōu dào le",
+            "covers": ["都 dōu"],
+            "humanVerified": false
+        },
+        {
+            "text": "北京是一个大都市。",
+            "pinyin": "běi jīng shì yí ge dà dū shì",
+            "covers": ["都 dū"],
+            "humanVerified": false
+        },
+        {
+            "text": "为什么你不说话？",
+            "pinyin": "wèi shén me nǐ bù shuō huà",
+            "covers": ["为什么"],
+            "humanVerified": false
+        },
+        {
+            "text": "他当老师当了十年。",
+            "pinyin": "tā dāng lǎo shī dāng le shí nián",
+            "covers": ["当 dāng"],
+            "humanVerified": false
+        },
+        {
+            "text": "我以为你不来了。",
+            "pinyin": "wǒ yǐ wéi nǐ bù lái le",
+            "covers": ["以为", "不"],
+            "humanVerified": false
+        },
+        {
+            "text": "这件事很重要。",
+            "pinyin": "zhè jiàn shì hěn zhòng yào",
+            "covers": ["重 zhòng"],
+            "humanVerified": false
+        },
+        {
+            "text": "请你再说一遍。",
+            "pinyin": "qǐng nǐ zài shuō yí biàn",
+            "covers": ["一"],
+            "humanVerified": false
+        },
+        {
+            "text": "我们一起去吧。",
+            "pinyin": "wǒ men yì qǐ qù ba",
+            "covers": ["一"],
+            "humanVerified": false
+        },
+        {
+            "text": "他好像不太高兴。",
+            "pinyin": "tā hǎo xiàng bú tài gāo xìng",
+            "covers": ["不"],
+            "humanVerified": false
+        },
+        {
+            "text": "你喜欢喝咖啡还是茶？",
+            "pinyin": "nǐ xǐ huan hē kā fēi hái shi chá",
+            "covers": ["还是"],
+            "humanVerified": false
+        },
+        {
+            "text": "差不多了，我们走吧。",
+            "pinyin": "chà bu duō le wǒ men zǒu ba",
+            "covers": ["差不多"],
+            "humanVerified": false
+        },
+        {
+            "text": "他的发音很好。",
+            "pinyin": "tā de fā yīn hěn hǎo",
+            "covers": ["发 fā"],
+            "humanVerified": false
+        },
+        {
+            "text": "我去理发了。",
+            "pinyin": "wǒ qù lǐ fà le",
+            "covers": ["发 fà"],
+            "humanVerified": false
+        },
+        {
+            "text": "这家店的东西很便宜。",
+            "pinyin": "zhè jiā diàn de dōng xi hěn pián yi",
+            "covers": ["东西", "便宜"],
+            "humanVerified": false
+        },
+        {
+            "text": "我一点儿都不累。",
+            "pinyin": "wǒ yì diǎn r dōu bú lèi",
+            "covers": ["一点儿", "不"],
+            "humanVerified": false
+        },
+        {
+            "text": "你会不会说中文？",
+            "pinyin": "nǐ huì bu huì shuō zhōng wén",
+            "covers": ["不 in A-not-A"],
+            "humanVerified": false
+        },
+        {
+            "text": "银行九点就开门了。",
+            "pinyin": "yín háng jiǔ diǎn jiù kāi mén le",
+            "covers": ["银行"],
+            "humanVerified": false
+        }
+    ]
+}

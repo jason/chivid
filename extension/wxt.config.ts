@@ -103,6 +103,11 @@ export default defineConfig({
             version,
             action: { default_title: title },
             default_locale: project.defaultLanguage,
+            // Mandarin Edition: the jieba word segmenter is WebAssembly, compiled in the background
+            // service worker. 'wasm-unsafe-eval' allows WebAssembly only, not eval of JavaScript.
+            content_security_policy: {
+                extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+            },
             icons: {
                 '16': 'icon/icon16.png',
                 '48': 'icon/icon48.png',

@@ -2,6 +2,9 @@ import { AutoPausePreference, PlayMode } from '@project/common/src/model';
 import { AutoPauseResumeMode, SubtitleVisibility } from '@project/common/settings/settings';
 import type { AsbplayerSettings } from '@project/common/settings/settings';
 import type { Recipe } from '@project/common/settings/settings-recipes';
+import { defaultDictionaryTracks, TokenStatus } from '@project/common/settings/settings-dictionary';
+import type { DictionaryTrack } from '@project/common/settings/settings-dictionary';
+import { mandarinEngineUrl } from '@project/common/mandarin/engine/engine-url';
 
 export type MandarinRecipeId = 'justWatch' | 'ears' | 'listenFirst';
 
@@ -44,8 +47,29 @@ export const recipeCycleShortcut = { keys: 'shift+L' };
  * recipes they do not already have (matched by name, so renamed or edited copies are left alone)
  * and binds Shift+L to the next recipe if that shortcut is free. Never changes the active recipe.
  */
+/**
+ * Points a subtitle track's annotation at the built-in Mandarin engine, with pinyin shown on
+ * hover for words that are not yet known (uncollected, unknown, learning) and nothing else added.
+ */
+export const mandarinEngineTrack = (track: DictionaryTrack): DictionaryTrack => {
+    const config = track.dictionaryTokenAnnotationConfig;
+    return {
+        ...track,
+        dictionaryYomitanUrl: mandarinEngineUrl,
+        dictionaryYomitanParser: 'scanning-parser',
+        dictionaryTokenAnnotationConfig: {
+            ...config,
+            video: { ...config.video, reading: { ...config.video.reading, onHoverEnabled: true } },
+            onStatuses: config.onStatuses.map((options, status) => ({
+                ...options,
+                reading: status <= TokenStatus.LEARNING,
+            })),
+        },
+    };
+};
+
 export const settingsForEnablingMandarin = (
-    settings: Pick<AsbplayerSettings, 'recipes' | 'keyBindSet'>
+    settings: Pick<AsbplayerSettings, 'recipes' | 'keyBindSet'> & Partial<Pick<AsbplayerSettings, 'dictionaryTracks'>>
 ): Partial<AsbplayerSettings> => {
     const existingNames = new Set(settings.recipes.map((recipe) => recipe.name));
     const missing = mandarinRecipes
@@ -56,8 +80,14 @@ export const settingsForEnablingMandarin = (
             settings: recipeSettings,
         }));
     const cycleIsFree = !settings.keyBindSet.cycleRecipesForward.keys;
+    // Track 1 switches to the engine only while it still has upstream's default Yomitan address,
+    // so a learner who already set up Yomitan keeps their setup.
+    const tracks = settings.dictionaryTracks;
+    const firstTrackIsDefault =
+        tracks !== undefined && tracks[0]?.dictionaryYomitanUrl === defaultDictionaryTracks[0].dictionaryYomitanUrl;
     return {
         mandarinEditionEnabled: true,
+        ...(firstTrackIsDefault ? { dictionaryTracks: [mandarinEngineTrack(tracks[0]), ...tracks.slice(1)] } : {}),
         ...(missing.length > 0 ? { recipes: [...settings.recipes, ...missing] } : {}),
         ...(cycleIsFree ? { keyBindSet: { ...settings.keyBindSet, cycleRecipesForward: recipeCycleShortcut } } : {}),
     };
