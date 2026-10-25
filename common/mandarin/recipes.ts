@@ -1,3 +1,4 @@
+import { subtitleStyleForDisabling, subtitleStyleForEnabling } from '@project/common/mandarin/subtitle-style';
 import { defaultKnownCharacters, engineUrlForKnownCharacters } from '@project/common/mandarin/known-characters';
 import { AutoPausePreference, PlayMode } from '@project/common/src/model';
 import { AutoPauseResumeMode, SubtitleVisibility } from '@project/common/settings/settings';
@@ -49,8 +50,8 @@ export const recipeCycleShortcut = { keys: 'shift+L' };
  * and binds Shift+L to the next recipe if that shortcut is free. Never changes the active recipe.
  */
 /**
- * Points a subtitle track's annotation at the built-in Mandarin engine, with pinyin shown on
- * hover for words that are not yet known (uncollected, unknown, learning) and nothing else added.
+ * Points a subtitle track's annotation at the built-in Mandarin engine, with pinyin and the
+ * English gloss shown on hover for words that are not yet known (uncollected, unknown, learning).
  */
 export const mandarinEngineTrack = (track: DictionaryTrack, knownCharacters?: string): DictionaryTrack => {
     const config = track.dictionaryTokenAnnotationConfig;
@@ -61,18 +62,22 @@ export const mandarinEngineTrack = (track: DictionaryTrack, knownCharacters?: st
         dictionaryYomitanParser: 'scanning-parser',
         dictionaryTokenAnnotationConfig: {
             ...config,
-            video: { ...config.video, reading: { ...config.video.reading, onHoverEnabled: true } },
+            video: {
+                ...config.video,
+                reading: { ...config.video.reading, onHoverEnabled: true },
+                gloss: { ...config.video.gloss, onHoverEnabled: true },
+            },
             onStatuses: config.onStatuses.map((options, status) => ({
                 ...options,
                 reading: status <= TokenStatus.LEARNING,
+                gloss: status <= TokenStatus.LEARNING,
             })),
         },
     };
 };
 
 export const settingsForEnablingMandarin = (
-    settings: Pick<AsbplayerSettings, 'recipes' | 'keyBindSet'> &
-        Partial<Pick<AsbplayerSettings, 'dictionaryTracks' | 'mandarinKnownCharacters'>>
+    settings: Pick<AsbplayerSettings, 'recipes' | 'keyBindSet'> & Partial<AsbplayerSettings>
 ): Partial<AsbplayerSettings> => {
     // First enable: start from HSK 1-2, so pinyin appears only over characters past that level.
     const seedKnown = !settings.mandarinKnownCharacters;
@@ -92,6 +97,7 @@ export const settingsForEnablingMandarin = (
     const firstTrackIsDefault =
         tracks !== undefined && tracks[0]?.dictionaryYomitanUrl === defaultDictionaryTracks[0].dictionaryYomitanUrl;
     return {
+        ...subtitleStyleForEnabling(settings),
         mandarinEditionEnabled: true,
         ...(seedKnown ? { mandarinKnownCharacters: known } : {}),
         ...(firstTrackIsDefault
@@ -101,3 +107,9 @@ export const settingsForEnablingMandarin = (
         ...(cycleIsFree ? { keyBindSet: { ...settings.keyBindSet, cycleRecipesForward: recipeCycleShortcut } } : {}),
     };
 };
+
+/** Settings to write when the learner turns the edition off: the flag, and upstream's subtitle look if untouched. */
+export const settingsForDisablingMandarin = (settings: Partial<AsbplayerSettings>): Partial<AsbplayerSettings> => ({
+    ...subtitleStyleForDisabling(settings),
+    mandarinEditionEnabled: false,
+});

@@ -48,7 +48,10 @@ export function PopupUi({ commands }: Props) {
     const dictionaryProvider = useMemo(() => new DictionaryProvider(new ExtensionDictionaryStorage()), []);
     const settingsProvider = useMemo(() => new SettingsProvider(new ExtensionSettingsStorage()), []);
     const [settings, setSettings] = useState<AsbplayerSettings>();
-    const theme = useMemo(() => settings && createTheme(settings.themeType), [settings]);
+    const theme = useMemo(
+        () => settings && createTheme(settings.themeType, settings.mandarinEditionEnabled),
+        [settings]
+    );
 
     useEffect(() => {
         void settingsProvider

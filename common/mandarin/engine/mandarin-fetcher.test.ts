@@ -59,6 +59,18 @@ describe('MandarinFetcher through upstream Yomitan client', () => {
         expect(knowing.tokenize('银行', 0).content[0].map((p) => p.reading)).toEqual(['', '']);
     });
 
+    it('glosses a word in the sense its sentence just resolved', () => {
+        const fresh = new MandarinEngine({
+            dictionary: testDictionary(),
+            segmenter: nodeSegmenter,
+            contextPinyin: pinyinProContext,
+        });
+        fresh.tokenize('这个很便宜。', 0);
+        const [first] = fresh.termEntries('便宜', 0).dictionaryEntries;
+        expect(first.headwords[0].reading).toBe('pián yi');
+        expect(first.definitions[0].entries[0]).toMatch(/cheap/);
+    });
+
     it('tokenizes several lines in one request and caches each line', async () => {
         const client = yomitan();
         await client.version();

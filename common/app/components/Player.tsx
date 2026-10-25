@@ -360,7 +360,8 @@ function PlayerComponent(
                 [
                     playbackTimelineToHtml({
                         plan: playbackPlan,
-                        themeColor: createTheme(playbackSettings.themeType).palette.primary.main,
+                        themeColor: createTheme(playbackSettings.themeType, playbackSettings.mandarinEditionEnabled)
+                            .palette.primary.main,
                         title,
                         modeLabels: playbackTimelineModeLabels,
                         timelineOptionsTitle: timelineSettingsSummary.title,

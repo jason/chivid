@@ -41,7 +41,7 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import NoWrapButton from '@project/common/components/NoWrapButton';
 import { settingsForKnownCharacters } from '@project/common/mandarin/known-characters';
 import MandarinSettingsSection from '@project/common/components/MandarinSettingsSection';
-import { settingsForEnablingMandarin } from '@project/common/mandarin/recipes';
+import { settingsForDisablingMandarin, settingsForEnablingMandarin } from '@project/common/mandarin/recipes';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
@@ -210,7 +210,7 @@ const MiscSettingTab: React.FC<Props> = ({
                         onEnabledChanged={(enabled) =>
                             enabled
                                 ? onSettingsChanged(settingsForEnablingMandarin(settings))
-                                : void onSettingChanged('mandarinEditionEnabled', false)
+                                : onSettingsChanged(settingsForDisablingMandarin(settings))
                         }
                         canExportLedger={!insideApp}
                         knownCharacters={settings.mandarinKnownCharacters}

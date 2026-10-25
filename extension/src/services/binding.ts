@@ -1512,6 +1512,7 @@ export default class Binding {
         this.pauseOnHoverMode = currentSettings.pauseOnHoverMode;
 
         this.subtitleController.displaySubtitles = currentSettings.streamingDisplaySubtitles;
+        document.body.classList.toggle('asbplayer-mandarin', currentSettings.mandarinEditionEnabled);
         this.learningController.settingsChanged({
             ...currentSettings,
             recipeName: activeRecipe(currentSettings)?.name ?? null,

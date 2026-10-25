@@ -1,7 +1,13 @@
 import { defaultKnownCharacters, engineUrlForKnownCharacters } from '@project/common/mandarin/known-characters';
 import { describe, expect, it } from '@jest/globals';
 import { defaultSettings, normalizeRecipe } from '@project/common/settings';
-import { mandarinRecipeId, mandarinRecipes, settingsForEnablingMandarin } from '@project/common/mandarin/recipes';
+import {
+    mandarinRecipeId,
+    mandarinRecipes,
+    settingsForDisablingMandarin,
+    settingsForEnablingMandarin,
+} from '@project/common/mandarin/recipes';
+import { mandarinSubtitleStyle } from '@project/common/mandarin/subtitle-style';
 
 describe('Mandarin recipes', () => {
     it('are valid upstream recipes that keep hideUntilRevealed', () => {
@@ -56,6 +62,15 @@ describe('Mandarin recipes', () => {
         const track = change.dictionaryTracks![0];
         expect(track.dictionaryYomitanUrl).toBe(engineUrlForKnownCharacters(defaultKnownCharacters()));
         expect(track.dictionaryTokenAnnotationConfig.video.reading.onHoverEnabled).toBe(true);
+        expect(track.dictionaryTokenAnnotationConfig.video.gloss.onHoverEnabled).toBe(true);
+        expect(track.dictionaryTokenAnnotationConfig.onStatuses.map((s) => s.gloss)).toEqual([
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+        ]);
         expect(track.dictionaryTokenAnnotationConfig.onStatuses.map((s) => s.reading)).toEqual([
             true,
             true,
@@ -81,5 +96,28 @@ describe('Mandarin recipes', () => {
         const again = settingsForEnablingMandarin({ ...defaultSettings, mandarinKnownCharacters: '我' });
         expect(again.mandarinKnownCharacters).toBeUndefined();
         expect(again.dictionaryTracks![0].dictionaryYomitanUrl).toBe(engineUrlForKnownCharacters('我'));
+    });
+});
+
+describe('Mandarin Edition subtitle look', () => {
+    it('restyles untouched upstream subtitles on enable and restores them on disable', () => {
+        const enabled = { ...defaultSettings, ...settingsForEnablingMandarin(defaultSettings) };
+        expect(enabled.subtitleBackgroundOpacity).toBe(mandarinSubtitleStyle.subtitleBackgroundOpacity);
+        expect(enabled.subtitleThickness).toBe(500);
+        const disabled = { ...enabled, ...settingsForDisablingMandarin(enabled) };
+        expect(disabled.mandarinEditionEnabled).toBe(false);
+        expect(disabled.subtitleThickness).toBe(defaultSettings.subtitleThickness);
+        expect(disabled.subtitleCustomStyles).toEqual(defaultSettings.subtitleCustomStyles);
+    });
+
+    it("never touches a learner's own subtitle look", () => {
+        const own = { ...defaultSettings, subtitleThickness: 400 };
+        expect(settingsForEnablingMandarin(own).subtitleThickness).toBeUndefined();
+        const edited = {
+            ...defaultSettings,
+            ...settingsForEnablingMandarin(defaultSettings),
+            subtitleBackgroundOpacity: 0.8,
+        };
+        expect(settingsForDisablingMandarin(edited)).toEqual({ mandarinEditionEnabled: false });
     });
 });

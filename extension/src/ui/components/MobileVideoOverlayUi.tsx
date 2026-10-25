@@ -260,8 +260,8 @@ const MobileVideoOverlayUi = () => {
         fetchLastControlType,
     });
     const theme = useMemo(
-        () => (model?.themeType === undefined ? undefined : createTheme(model?.themeType)),
-        [model?.themeType]
+        () => (model?.themeType === undefined ? undefined : createTheme(model.themeType, model.mandarinEditionEnabled)),
+        [model?.themeType, model?.mandarinEditionEnabled]
     );
 
     if (!i18nInitialized || lastControlType === undefined || !theme) {

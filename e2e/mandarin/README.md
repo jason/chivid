@@ -24,7 +24,9 @@ Needs Playwright with Chromium and `python3`. `make-fixtures.sh` regenerates the
 | 4 | Just Watch | Text is visible, so G is refused and nothing is recorded |
 | 5 | Segment loop | [ and ] loop lines 1–2 with text hidden even in Just Watch; [ while looping gives a clean pass; ] stops and text returns |
 | 6 | Export to tutor | Settings → Misc → Export learning ledger downloads JSONL; `tools/ledger_to_lesson.py` turns it into the "From last night" block |
-| 7 | On-video mode button | The active recipe's icon and label; the vertical menu is fully visible; choosing Just Watch saves it and shows the line |
+| 7 | On-video mode button | The active recipe's icon and label; the vertical menu is fully visible; choosing Just Watch saves it and shows the line; the edition toolbar is a blurred pill |
+| 8a | Chinese engine | Enabling seeds HSK 1–2 (598 characters) and points track 1 at the engine. A line of HSK 1–2 characters shows no pinyin. Editing the known set in Settings re-annotates the open video: pinyin appears over exactly 便宜银行 (pián yi, not biàn yí), 便宜 glosses "cheap", known-character words get no gloss. Adding through HSK 3 clears them again |
+| 8b | Edition look | Enable gives subtitles the pill, weight 500 and the CJK font; disable restores stock asbplayer's look |
 
 A mutation check was run when these were written: disabling the "revealed lines cannot be
 counted" rule makes journeys 3b and 4 fail.

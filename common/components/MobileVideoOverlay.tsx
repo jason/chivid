@@ -22,9 +22,12 @@ import HoldableIconButton from '@project/common/components/HoldableIconButton';
 import PlaybackModeSelector from '@project/common/components/PlaybackModeSelector';
 import ScrollableNumberControls from '@project/common/components/ScrollableNumberControls';
 import Tooltip from '@project/common/components/Tooltip';
+import { mandarinTokens } from '@project/common/theme/theme';
 import { minimumPlaybackRate } from '@project/common/util';
 
 type Anchor = 'top' | 'bottom';
+
+const edition = mandarinTokens.dark;
 
 const useStyles = makeStyles(({ anchor }: { anchor: Anchor }) => ({
     button: {
@@ -32,6 +35,21 @@ const useStyles = makeStyles(({ anchor }: { anchor: Anchor }) => ({
     },
     inactiveButton: {
         color: 'rgba(120, 120, 120, 0.7)',
+    },
+    // Mandarin Edition toolbar: a quiet pill over the video, hairline edge, blurred backdrop.
+    mandarinContainer: {
+        alignItems: 'center',
+        padding: '0 6px',
+        backgroundColor: `${edition.overlay} !important`,
+        backdropFilter: 'blur(14px)',
+        border: `1px solid ${edition.line}`,
+        borderRadius: '999px !important',
+    },
+    mandarinButton: {
+        color: `${edition.fg} !important`,
+    },
+    mandarinInactiveButton: {
+        color: `${edition.fg3} !important`,
     },
     recordingButton: {
         color: 'red',
@@ -128,7 +146,16 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
     }: Props,
     ref
 ) {
-    const classes = useStyles({ anchor });
+    const baseClasses = useStyles({ anchor });
+    const mandarin = model?.mandarinEditionEnabled === true;
+    const classes = mandarin
+        ? {
+              ...baseClasses,
+              container: `${baseClasses.container} ${baseClasses.mandarinContainer}`,
+              button: `${baseClasses.button} ${baseClasses.mandarinButton}`,
+              inactiveButton: `${baseClasses.inactiveButton} ${baseClasses.mandarinInactiveButton}`,
+          }
+        : baseClasses;
     const offsetInputRef = useRef<HTMLInputElement>(undefined);
     const playbackInputRef = useRef<HTMLInputElement>(undefined);
     const [numberControlType, setNumberControlType] = useState<ControlType>(ControlType.timeDisplay);

@@ -388,7 +388,10 @@ function App({
     const supportsDictionaryStatistics = !extension.installed || extension.supportsDictionaryStatistics;
     const [subtitles, setSubtitles] = useState<DisplaySubtitleModel[]>([]);
     const playbackPreferences = usePlaybackPreferences();
-    const theme = useMemo<Theme>(() => createTheme(settings.themeType), [settings.themeType]);
+    const theme = useMemo<Theme>(
+        () => createTheme(settings.themeType, settings.mandarinEditionEnabled),
+        [settings.themeType, settings.mandarinEditionEnabled]
+    );
     const anki = useAnki({ settings, fetcher });
     const searchParams = useMemo(() => new URLSearchParams(location.search), []);
     const inVideoPlayer = useMemo(() => searchParams.get('video') !== null, [searchParams]);

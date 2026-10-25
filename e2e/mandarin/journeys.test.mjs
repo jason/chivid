@@ -324,6 +324,14 @@ describe('Journey 7: the learner sees and switches the mode from the on-video co
             const box = await items.last().boundingBox();
             assert.ok(box && box.height > 20, 'the last item is fully visible, not clipped');
 
+            const toolbar = await frame.evaluate(() => {
+                const bar = document.querySelector('[data-learning-mode]').closest('.MuiGrid-container');
+                const style = getComputedStyle(bar);
+                return { radius: style.borderRadius, backdrop: style.backdropFilter };
+            });
+            assert.equal(toolbar.radius, '999px', 'edition toolbar is a pill');
+            assert.equal(toolbar.backdrop, 'blur(14px)');
+
             await items.nth(1).click();
             await s.page.waitForFunction(
                 () => document.querySelector('.asbplayer-subtitles-container-bottom')?.textContent?.length > 0,
@@ -336,6 +344,148 @@ describe('Journey 7: the learner sees and switches the mode from the on-video co
             assert.equal(await frame.locator('[data-learning-mode]').getAttribute('data-learning-mode'), 'justWatch');
         } finally {
             await s.close();
+        }
+    });
+});
+
+/** Opens Settings → Misc on the extension's own settings page. */
+const openMiscSettings = async (app) => {
+    const page = await app.context.newPage();
+    await page.goto(`chrome-extension://${app.extensionId}/options.html`);
+    await page.getByRole('tab', { name: 'Misc' }).click();
+    return page;
+};
+
+/** Pinyin the engine put over each character of the line now on screen, as [character, pinyin]. */
+const shownPinyin = (page) =>
+    page.evaluate(() =>
+        [...document.querySelectorAll('.asbplayer-subtitles-container-bottom .asb-reading')].map((ruby) => [
+            ruby.firstChild?.textContent ?? '',
+            ruby.querySelector('rt')?.textContent ?? '',
+        ])
+    );
+
+/** Gloss text that would be visible for each glossed word, '' where the edition hides it. */
+const shownGlosses = (page) =>
+    page.evaluate(() =>
+        [...document.querySelectorAll('.asbplayer-subtitles-container-bottom ruby.asb-gloss > rt')].map((rt) =>
+            getComputedStyle(rt).visibility === 'hidden' ? '' : rt.textContent
+        )
+    );
+
+describe('Journey 8: the built-in Chinese engine gives pinyin and meaning only where the learner needs it', () => {
+    it('starts a new learner at HSK 1-2, re-annotates live when they edit their characters, and glosses in context', async () => {
+        const app = await h.launch();
+        try {
+            await h.setSettings(app.worker, h.baseSettings({ mandarinEditionEnabled: false }));
+            const settingsPage = await openMiscSettings(app);
+            await settingsPage.getByLabel('Enable Mandarin Edition').check();
+            const field = settingsPage.getByTestId('mandarin-known-characters');
+            await field.waitFor();
+            const seeded = await field.inputValue();
+            assert.equal([...seeded].length, 598, 'HSK 1 and 2 characters');
+            assert.ok(seeded.includes('我') && !seeded.includes('鳄'));
+            const { dictionaryTracks } = await h.getSettings(app.worker, ['dictionaryTracks']);
+            assert.match(dictionaryTracks[0].dictionaryYomitanUrl, /^local:\/\/mandarin\/known-/);
+
+            const page = await h.openPlayer(app.context, server.url);
+            await h.dropSubtitles(page);
+            await h.seekTo(page, insideLine(3));
+            await page.waitForFunction(
+                () => document.querySelector('.asbplayer-subtitles-container-bottom .asbplayer-subtitle-rich'),
+                null,
+                { timeout: 15000 }
+            );
+            assert.deepEqual(await shownPinyin(page), [], 'every character of line 3 is HSK 1-2, so no pinyin');
+
+            // The learner says they do not know 便, 宜, 银 or 行 yet: pinyin appears over exactly those,
+            // in the reading the sentence needs (pián yi, not biàn yí), without reloading the video.
+            await field.fill('我觉得这个的不太好');
+            await field.blur();
+            await page.bringToFront();
+            await page.waitForFunction(
+                () => document.querySelectorAll('.asbplayer-subtitles-container-bottom .asb-reading').length > 0,
+                null,
+                { timeout: 15000 }
+            );
+            assert.deepEqual(await shownPinyin(page), [
+                ['便', 'pián'],
+                ['宜', 'yi'],
+                ['银', 'yín'],
+                ['行', 'háng'],
+            ]);
+            // Meanings are looked up after the words are split, so they arrive a moment later.
+            await page.waitForFunction(
+                () => document.querySelectorAll('.asbplayer-subtitles-container-bottom ruby.asb-gloss').length > 0,
+                null,
+                { timeout: 15000 }
+            );
+            const glosses = (await shownGlosses(page)).filter(Boolean);
+            assert.ok(glosses.some((g) => /cheap/.test(g)), `便宜 is glossed as cheap, got ${glosses}`);
+            assert.ok(glosses.some((g) => /bank/.test(g)));
+            assert.ok(!glosses.some((g) => /^I$|^of$/.test(g)), 'words of known characters get no gloss');
+
+            // Adding everything through an HSK level takes them away again.
+            await settingsPage.bringToFront();
+            await settingsPage.getByTestId('mandarin-add-hsk').locator('..').click();
+            await settingsPage.getByRole('option', { name: /through HSK 3$/ }).click();
+            await page.bringToFront();
+            await page.waitForFunction(
+                () => document.querySelectorAll('.asbplayer-subtitles-container-bottom .asb-reading').length === 0,
+                null,
+                { timeout: 15000 }
+            );
+        } finally {
+            await app.close();
+        }
+    });
+
+    it('gives subtitles the edition look on enable and stock asbplayer back on disable', async () => {
+        const app = await h.launch();
+        try {
+            await h.setSettings(app.worker, h.baseSettings({ mandarinEditionEnabled: false }));
+            const settingsPage = await openMiscSettings(app);
+            await settingsPage.getByLabel('Enable Mandarin Edition').check();
+            await settingsPage.waitForTimeout(500);
+
+            const page = await h.openPlayer(app.context, server.url);
+            await h.dropSubtitles(page);
+            await h.seekTo(page, insideLine(2));
+            const look = () =>
+                page.evaluate(() => {
+                    const line = document.querySelector('.asbplayer-subtitles-container-bottom [data-track="0"]');
+                    const style = getComputedStyle(line);
+                    return {
+                        mandarin: document.body.classList.contains('asbplayer-mandarin'),
+                        background: style.backgroundColor,
+                        radius: style.borderRadius,
+                        weight: style.fontWeight,
+                        font: style.fontFamily,
+                    };
+                });
+            const edition = await look();
+            assert.equal(edition.mandarin, true);
+            assert.equal(edition.background, 'rgba(0, 0, 0, 0.55)');
+            assert.equal(edition.radius, '8px');
+            assert.equal(edition.weight, '500');
+            assert.match(edition.font, /Noto Sans SC/);
+
+            await settingsPage.bringToFront();
+            await settingsPage.getByLabel('Enable Mandarin Edition').uncheck();
+            await settingsPage.waitForTimeout(500);
+            await page.bringToFront();
+            await page.waitForFunction(
+                () => !document.body.classList.contains('asbplayer-mandarin'),
+                null,
+                { timeout: 10000 }
+            );
+            await h.seekTo(page, insideLine(2));
+            const stock = await look();
+            assert.equal(stock.background, 'rgba(0, 0, 0, 0)');
+            assert.equal(stock.weight, '700');
+            assert.doesNotMatch(stock.font, /Noto Sans SC/);
+        } finally {
+            await app.close();
         }
     });
 });

@@ -21,7 +21,10 @@ const settingsProvider = new SettingsProvider(new ExtensionSettingsStorage());
 const SidePanelUi = () => {
     const [settings, setSettings] = useState<AsbplayerSettings>();
     const extension = useChromeExtension({ component: 'sidePanel' });
-    const theme = useMemo(() => settings && createTheme(settings.themeType), [settings]);
+    const theme = useMemo(
+        () => settings && createTheme(settings.themeType, settings.mandarinEditionEnabled),
+        [settings]
+    );
 
     const onSettingsChanged = useSettingsUpdates(settingsProvider, setSettings);
 

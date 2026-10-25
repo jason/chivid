@@ -777,6 +777,7 @@ export default class VideoChannel {
             subtitleAboveThumbnail,
             mandarinEditionEnabled,
             hideUntilRevealed,
+            mandarinKnownCharacters,
         } = settings;
         const message: MiscSettingsToVideoMessage = {
             command: 'miscSettings',
@@ -833,6 +834,7 @@ export default class VideoChannel {
                 lastSelectedAnkiExportMode,
                 mandarinEditionEnabled,
                 hideUntilRevealed,
+                mandarinKnownCharacters,
                 thumbnailPreview,
                 subtitleAboveThumbnail,
             },

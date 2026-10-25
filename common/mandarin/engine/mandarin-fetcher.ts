@@ -54,6 +54,12 @@ export class MandarinEngine {
     private readonly parts: MandarinEngineParts;
     private knownCharacters: string;
     private known: ReadonlySet<string>;
+    /**
+     * The reading each word last resolved to in a sentence. Upstream asks termEntries for a
+     * word without its sentence, right after tokenizing the line, and glosses from the first
+     * entry; leading with this reading makes 便宜 in "this is cheap" gloss as "cheap".
+     */
+    private readonly resolvedReadings = new Map<string, string>();
 
     constructor(parts: MandarinEngineParts) {
         this.parts = parts;
@@ -73,6 +79,11 @@ export class MandarinEngine {
         const content: TokenPartResult[][] = tokens.map((token) => {
             if (!token.isWord) return [{ text: token.text, reading: '' }];
             const reading = token.parts.map((part) => part.reading).join('');
+            const numbered = token.parts.map((part) => part.numbered);
+            if (!token.uncertain && numbered.every((n) => n !== null)) {
+                if (this.resolvedReadings.size > 5000) this.resolvedReadings.clear();
+                this.resolvedReadings.set(token.text, numbered.join(' '));
+            }
             return token.parts.map((part, i) => {
                 // Known characters carry no ruby: pinyin appears only where the learner needs it.
                 // The headword keeps the whole word's reading for the dictionary popup.
@@ -90,8 +101,12 @@ export class MandarinEngine {
 
     termEntries(term: string, index: number): TermEntriesResult {
         const { dictionary } = this.parts;
-        const preferred = preferredReading(term);
         const readings = dictionary.readings(term);
+        // Sandhi changes the shown tone (不是 → bú shì) but not the dictionary entry, so match on
+        // the sentence reading only when the dictionary has it.
+        const resolved = this.resolvedReadings.get(term);
+        const inSentence = readings.find((r) => r.toLowerCase() === resolved?.toLowerCase());
+        const preferred = inSentence ?? preferredReading(term);
         const ordered = preferred
             ? [preferred, ...readings.filter((r) => r.toLowerCase() !== preferred.toLowerCase())]
             : readings;

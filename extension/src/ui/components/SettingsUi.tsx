@@ -15,7 +15,10 @@ const globalStateProvider = new ExtensionGlobalStateProvider();
 
 const SettingsUi = () => {
     const { dictionaryProvider, settings, onSettingsChanged, profileContext } = useSettings();
-    const theme = useMemo(() => settings && createTheme(settings.themeType), [settings]);
+    const theme = useMemo(
+        () => settings && createTheme(settings.themeType, settings.mandarinEditionEnabled),
+        [settings]
+    );
     const { handleAnnotationTutorialSeen, inAnnotationTutorial } = useAnnotationTutorial({ globalStateProvider });
 
     if (!settings || !theme) {

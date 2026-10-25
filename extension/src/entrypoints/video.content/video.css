@@ -408,3 +408,53 @@ div.asbplayer-fullscreen-subtitles > span {
 .asbplayer-fullscreen-subtitles[aria-hidden='true'] .asb-token-adaptive-hidden {
     visibility: hidden;
 }
+
+/* Mandarin Edition: pinyin ruby set lighter and quieter than the hanzi it sits over. */
+.asbplayer-mandarin .asb-reading rt {
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        sans-serif !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+    opacity: 0.8;
+    padding-bottom: 0.15em;
+}
+
+/* Ruby sits over the video, outside the pill: a soft shadow keeps it legible on bright frames. */
+.asbplayer-mandarin .asb-reading rt,
+.asbplayer-mandarin .asb-gloss rt {
+    text-shadow:
+        0 0 3px rgba(0, 0, 0, 0.9),
+        0 0 6px rgba(0, 0, 0, 0.6) !important;
+}
+
+/*
+ * A gloss only where pinyin is shown, i.e. over words with a character the learner does not
+ * know yet. Words made only of known characters stay clean even on hover.
+ */
+.asbplayer-mandarin ruby.asb-gloss:not(:has(.asb-reading)) > rt {
+    visibility: hidden;
+}
+
+/* Mandarin Edition: the hover gloss as a quiet card (surface, hairline, no shadow). */
+.asbplayer-mandarin .asb-gloss-popup::after {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(236, 226, 214, 0.24);
+    background: #26211c;
+    box-shadow: none;
+    color: #ece2d6;
+    -webkit-text-fill-color: #ece2d6;
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        sans-serif;
+    font-size: 14px !important;
+    line-height: 1.5;
+    letter-spacing: 0;
+}

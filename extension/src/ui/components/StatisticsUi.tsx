@@ -23,7 +23,10 @@ const settingsProvider = new SettingsProvider(new ExtensionSettingsStorage());
 
 const StatisticsUi = () => {
     const [settings, setSettings] = useState<AsbplayerSettings>();
-    const theme = useMemo(() => settings && createTheme(settings.themeType), [settings]);
+    const theme = useMemo(
+        () => settings && createTheme(settings.themeType, settings.mandarinEditionEnabled),
+        [settings]
+    );
     const extension = useChromeExtension({ component: 'statisticsPopup' });
 
     useEffect(() => {

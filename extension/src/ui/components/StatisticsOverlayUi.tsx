@@ -40,7 +40,10 @@ const StatisticsOverlayUi = () => {
     const [settings, setSettings] = useState<AsbplayerSettings>();
     const [mediaId, setMediaId] = useState<string>();
     const mediaIdRef = useRef<string | undefined>(undefined);
-    const theme = useMemo(() => settings && createTheme(settings.themeType), [settings]);
+    const theme = useMemo(
+        () => settings && createTheme(settings.themeType, settings.mandarinEditionEnabled),
+        [settings]
+    );
     const extension = useChromeExtension({ component: 'statisticsPopup' });
 
     mediaIdRef.current = mediaId;
