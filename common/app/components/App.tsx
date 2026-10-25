@@ -1,3 +1,4 @@
+import project from '@project/common/project';
 import { asbError, asbWarn } from '@project/common/util/log';
 import { humanReadableTime, download, extractText, timeDurationDisplay } from '@project/common/util';
 import type { ComponentProps } from 'react';
@@ -93,9 +94,7 @@ import VideoDataSyncDialog, { useVideoDataSyncDialogState } from '@project/commo
 import type { FileWithId } from '@project/common/file-selector';
 import { DefaultFileSelector } from '@project/common/file-selector';
 
-const latestExtensionVersion = '1.16.0';
-const extensionUrl =
-    'https://chromewebstore.google.com/detail/asbplayer-language-learni/hkledmpjpaehamkiehglnbelcpdflcab';
+const extensionUrl = project.extension.chrome.storeUrl;
 
 const useContentStyles = makeStyles<Theme, ContentProps>((theme) => ({
     content: {
@@ -223,6 +222,7 @@ function extractSources(files: FileWithId[]): MediaSources {
 
 interface RenderVideoProps {
     searchParams: URLSearchParams;
+    supportsDictionaryPlayback: boolean;
     settingsProvider: SettingsProvider;
     settings: AsbplayerSettings;
     extension: ChromeExtension;
@@ -384,6 +384,7 @@ function App({
         settings.subtitleHtml,
         settings.convertNetflixRuby,
     ]);
+    const supportsDictionaryPlayback = !extension.installed || extension.supportsDictionaryPlayback;
     const supportsDictionaryStatistics = !extension.installed || extension.supportsDictionaryStatistics;
     const [subtitles, setSubtitles] = useState<DisplaySubtitleModel[]>([]);
     const playbackPreferences = usePlaybackPreferences();
@@ -1649,7 +1650,7 @@ function App({
         );
     }, []);
 
-    const { hash: settingsHash } = useLocationHash({ view: 'settings' });
+    const { hash: settingsHash, url: settingsUrl } = useLocationHash({ view: 'settings' });
     useEffect(() => {
         if (settingsHash === undefined) {
             return;
@@ -1657,7 +1658,7 @@ function App({
 
         setSettingsDialogScrollToId(settingsHash);
         setSettingsDialogOpen(true);
-    }, [settingsHash]);
+    }, [settingsHash, settingsUrl]);
 
     useEffect(() => {
         if (sources.videoFile && alertOpen && alert && alertSeverity) {
@@ -1880,6 +1881,7 @@ function App({
                     {inVideoPlayer ? (
                         <>
                             <RenderVideo
+                                supportsDictionaryPlayback={supportsDictionaryPlayback}
                                 searchParams={searchParams}
                                 settingsProvider={settingsProvider}
                                 settings={settings}
@@ -1959,6 +1961,7 @@ function App({
                                 />
                             )}
                             <SettingsDialog
+                                supportsDictionaryPlayback={supportsDictionaryPlayback}
                                 anki={anki}
                                 extension={extension}
                                 open={settingsDialogOpen}
@@ -2014,7 +2017,7 @@ function App({
                                 onClose={handleCloseNeedRefreshDialog}
                             />
                             <Bar
-                                title={fileName || 'asbplayer'}
+                                title={fileName || project.names.short}
                                 drawerWidth={drawerWidth}
                                 drawerOpen={effectiveDrawerOpen}
                                 hidden={appBarHidden}
@@ -2047,7 +2050,7 @@ function App({
                                 <Paper square style={{ width: '100%', height: '100%', position: 'relative' }}>
                                     {nothingLoaded && (
                                         <LandingPage
-                                            latestExtensionVersion={latestExtensionVersion}
+                                            latestExtensionVersion={project.releases.extension.publishedVersion}
                                             extensionUrl={extensionUrl}
                                             extension={extension}
                                             loading={loading}
@@ -2069,6 +2072,7 @@ function App({
                                     />
                                 </Paper>
                                 <Player
+                                    supportsDictionaryPlayback={supportsDictionaryPlayback}
                                     ref={playerRef}
                                     origin={origin}
                                     subtitleReader={subtitleReader}

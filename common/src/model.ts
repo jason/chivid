@@ -348,8 +348,6 @@ export interface MobileOverlayModel {
     themeType: 'dark' | 'light';
     playModes: PlayMode[];
     overlayInstanceId?: string;
-    /** Mandarin Edition: present only when the edition is enabled. */
-    learningMode?: 'off' | 'justWatch' | 'ears' | 'listenFirst';
 }
 
 export enum ControlType {

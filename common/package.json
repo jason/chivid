@@ -1,7 +1,6 @@
 {
     "private": true,
     "name": "@project/common",
-    "version": "0.1.0",
     "license": "AGPL-3.0-or-later",
     "dependencies": {
         "@flatten-js/interval-tree": "^1.0.19",
@@ -19,6 +18,7 @@
         "dexie": "^4.0.11",
         "dompurify": "^3.4.13",
         "fast-xml-parser": "^4.0.7",
+        "fflate": "0.8.3",
         "hotkeys-js": "^3.10.0",
         "i18next": "^25.3.2",
         "i18next-browser-languagedetector": "^7.0.1",

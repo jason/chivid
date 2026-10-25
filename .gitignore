@@ -27,3 +27,7 @@ npm-debug.log*
 
 .direnv
 
+
+# Python
+__pycache__/
+*.pyc

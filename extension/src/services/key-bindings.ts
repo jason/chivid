@@ -20,6 +20,7 @@ type Unbinder = (() => void) | false;
 export default class KeyBindings {
     private _keyBinder: DefaultKeyBinder | undefined;
 
+    private _unbindRecipes?: () => void;
     private _unbindPlay: Unbinder = false;
     private _unbindAutoPause: Unbinder = false;
     private _unbindCondensedPlayback: Unbinder = false;
@@ -38,7 +39,6 @@ export default class KeyBindings {
     private _unbindToggleRepeat: Unbinder = false;
     private _unbindCycleAutoPauseResumeMode: Unbinder = false;
     private _unbindToggleSubtitleVisibility: Unbinder = false;
-    private _unbindCycleLearningMode: Unbinder = false;
     private _unbindMarkLineGotIt: Unbinder = false;
     private _unbindMarkLineMissed: Unbinder = false;
     private _unbindRevealLine: Unbinder = false;
@@ -72,6 +72,19 @@ export default class KeyBindings {
         if (this._bound) {
             this.unbind();
         }
+
+        this._unbindRecipes = this._keyBinder.bindRecipes(
+            (event, action) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                void context
+                    .selectRecipe(action)
+                    .catch((error) => asbError('playback/recipe', 'Recipe shortcut failed', { action, error }));
+            },
+            () => !context.synced,
+            () => context.subtitleController.subtitles,
+            true
+        );
 
         this._unbindPlay = this._keyBinder.bindPlay(
             (event) => {
@@ -130,17 +143,6 @@ export default class KeyBindings {
 
         const learningInactive = () =>
             !context.learningController?.active || context.subtitleController.subtitles.length === 0;
-
-        this._unbindCycleLearningMode = this._keyBinder.bindLearningShortcut(
-            'cycleLearningMode',
-            (event) => {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                context.cycleLearningMode();
-            },
-            learningInactive,
-            true
-        );
 
         this._unbindMarkLineGotIt = this._keyBinder.bindLearningShortcut(
             'markLineGotIt',
@@ -583,6 +585,9 @@ export default class KeyBindings {
             this._unbindResetOffset = false;
         }
 
+        this._unbindRecipes?.();
+        this._unbindRecipes = undefined;
+
         if (this._unbindToggleRepeat) {
             this._unbindToggleRepeat();
             this._unbindToggleRepeat = false;
@@ -599,7 +604,6 @@ export default class KeyBindings {
         }
 
         for (const unbind of [
-            this._unbindCycleLearningMode,
             this._unbindMarkLineGotIt,
             this._unbindMarkLineMissed,
             this._unbindRevealLine,
@@ -608,7 +612,6 @@ export default class KeyBindings {
         ]) {
             if (unbind) unbind();
         }
-        this._unbindCycleLearningMode = false;
         this._unbindMarkLineGotIt = false;
         this._unbindMarkLineMissed = false;
         this._unbindRevealLine = false;

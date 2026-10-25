@@ -13,7 +13,7 @@ const heard = (sentence: string, result: 'got' | 'missed'): NewLedgerEvent => ({
     end: 2400,
     sourceUrl: 'https://www.youtube.com/watch?v=example',
     title: 'Example',
-    mode: 'ears',
+    recipe: 'Ears',
 });
 
 beforeEach(async () => {

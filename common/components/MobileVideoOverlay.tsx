@@ -1,14 +1,17 @@
+import PlaybackModeButton from '@project/common/components/PlaybackModeButton';
+import type { Recipe } from '@project/common/settings';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import type { GridProps } from '@mui/material/Grid';
 import Grid from '@mui/material/Grid';
+import type { GridProps } from '@mui/material/Grid';
+
 import IconButton from '@mui/material/IconButton';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import TuneIcon from '@mui/icons-material/Tune';
-import type { MobileOverlayModel, PlayMode } from '@project/common';
 import { ControlType, PostMineAction } from '@project/common';
+import type { MobileOverlayModel, PlayMode } from '@project/common';
+
 import { makeStyles } from '@mui/styles';
 import { useTranslation } from 'react-i18next';
 import LogoIcon from '@project/common/components/LogoIcon';
@@ -18,7 +21,7 @@ import HoldableIconButton from '@project/common/components/HoldableIconButton';
 import PlaybackModeSelector from '@project/common/components/PlaybackModeSelector';
 import ScrollableNumberControls from '@project/common/components/ScrollableNumberControls';
 import Tooltip from '@project/common/components/Tooltip';
-import { minimumPlaybackRate } from '@project/common/playback/controllers/playback-mode-controller';
+import { minimumPlaybackRate } from '@project/common/util';
 
 type Anchor = 'top' | 'bottom';
 
@@ -31,40 +34,6 @@ const useStyles = makeStyles(({ anchor }: { anchor: Anchor }) => ({
     },
     recordingButton: {
         color: 'red',
-    },
-    learningModePill: {
-        height: 28,
-        padding: '0 14px',
-        margin: '0 8px 0 6px',
-        borderRadius: 999,
-        border: '1px solid rgba(236, 226, 214, 0.24)',
-        background: 'transparent',
-        color: '#ece2d6',
-        font: 'inherit',
-        fontSize: 12,
-        fontWeight: 600,
-        letterSpacing: '0.02em',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-        '&:hover': {
-            background: 'rgba(210, 84, 58, 0.16)',
-        },
-        '&:focus-visible': {
-            outline: '2px solid #d2543a',
-            outlineOffset: 2,
-        },
-    },
-    learningModeDot: {
-        width: 6,
-        height: 6,
-        borderRadius: '50%',
-        background: '#d2543a',
-    },
-    learningModeDotOff: {
-        background: 'rgba(236, 226, 214, 0.4)',
     },
     container: {
         display: 'inline-flex',
@@ -121,10 +90,12 @@ interface Props {
     onLoadSubtitles?: () => void;
     onOffset: (offset: number) => void;
     onPlaybackRate: (playbackRate: number) => void;
+    recipes?: readonly Recipe[];
+    activeRecipeId?: number | null;
+    onRecipeSelected?: (index: number | null) => void;
     onPlayModeSelected: (playMode: PlayMode) => void;
     onSeek: (timestamp: number) => void;
     onToggleSubtitles: () => void;
-    onCycleLearningMode?: () => void;
     flexDirection: React.CSSProperties['flexDirection'];
     onPlayModeSelectorOpened?: () => void;
     onPlayModeSelectorClosed?: () => void;
@@ -142,10 +113,12 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
         onLoadSubtitles,
         onOffset,
         onPlaybackRate,
+        recipes,
+        activeRecipeId,
+        onRecipeSelected,
         onPlayModeSelected,
         onSeek,
         onToggleSubtitles,
-        onCycleLearningMode,
         flexDirection,
         onPlayModeSelectorOpened,
         onPlayModeSelectorClosed,
@@ -468,26 +441,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
                         </Tooltip>
                     </Grid>
                 )}
-                {!model.emptySubtitleTrack && model.learningMode !== undefined && onCycleLearningMode && (
-                    <Grid item>
-                        <Tooltip {...defaultTooltipProps} title={t('binds.cycleLearningMode')}>
-                            <button
-                                type="button"
-                                className={classes.learningModePill}
-                                onClick={onCycleLearningMode}
-                                aria-label={t('binds.cycleLearningMode')}
-                            >
-                                <span
-                                    className={`${classes.learningModeDot} ${
-                                        model.learningMode === 'off' ? classes.learningModeDotOff : ''
-                                    }`}
-                                />
-                                {t(`mandarin.mode.${model.learningMode}`)}
-                            </button>
-                        </Tooltip>
-                    </Grid>
-                )}
-                {!model.emptySubtitleTrack && (
+                {(!model.emptySubtitleTrack || (!!recipes?.length && onRecipeSelected)) && (
                     <Grid item>
                         <PlaybackModeSelector
                             selectedPlayModes={new Set(model.playModes)}
@@ -495,24 +449,25 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
                             keepManualSelectorOpen
                             onSelectorOpened={onPlayModeSelectorOpened}
                             onSelectorClosed={onPlayModeSelectorClosed}
-                            renderButton={({ anchorRef, onClick, onMouseEnter, onMouseLeave }) => (
-                                <Tooltip {...defaultTooltipProps} title={t('controls.playbackMode')}>
-                                    <span>
-                                        <IconButton
-                                            ref={anchorRef}
-                                            disabled={model.recording}
-                                            onClick={onClick}
-                                            onMouseEnter={onMouseEnter}
-                                            onMouseLeave={onMouseLeave}
-                                        >
-                                            <TuneIcon
-                                                className={model.recording ? classes.inactiveButton : classes.button}
-                                            />
-                                        </IconButton>
-                                    </span>
-                                </Tooltip>
+                            renderButton={({ anchorRef, open, onClick, onMouseEnter, onMouseLeave }) => (
+                                <PlaybackModeButton
+                                    ref={anchorRef}
+                                    disabled={model.recording}
+                                    className={model.recording ? classes.inactiveButton : classes.button}
+                                    onClick={onClick}
+                                    onMouseEnter={onMouseEnter}
+                                    onMouseLeave={onMouseLeave}
+                                    aria-expanded={open}
+                                    recipes={onRecipeSelected ? recipes : undefined}
+                                    activeRecipeId={activeRecipeId}
+                                    tooltipProps={defaultTooltipProps}
+                                />
                             )}
                             selectorProps={{
+                                recipes,
+                                activeRecipeId,
+                                onRecipeSelect: onRecipeSelected,
+                                playModesEnabled: !model.emptySubtitleTrack,
                                 listStyle: {
                                     display: 'flex',
                                     justifyContent: 'flex-start',

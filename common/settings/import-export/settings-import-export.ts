@@ -1,3 +1,7 @@
+import {
+    minimumWholeSubtitleMatchThreshold,
+    maximumWholeSubtitleMatchThreshold,
+} from '@project/common/settings/settings-dictionary';
 import { Validator } from 'jsonschema';
 import type { AsbplayerSettings } from '@project/common/settings/settings';
 import { ensureConsistencyOnRead } from '@project/common/settings/settings-provider';
@@ -125,6 +129,214 @@ const dictionaryTrackSchema = {
                 },
                 required: ['display', 'color', 'alpha'],
             },
+        },
+        dictionaryPlaybackConfig: {
+            type: 'object',
+            properties: {
+                selectOnPause: {
+                    type: 'object',
+                    properties: {
+                        onStatuses: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        onStates: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                    },
+                    required: ['onStatuses', 'onStates'],
+                },
+                autoPause: {
+                    type: 'object',
+                    properties: {
+                        onStatuses: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        onStates: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        rules: {
+                            type: 'object',
+                            properties: {
+                                minWords: { type: 'integer', minimum: 0 },
+                                maxWords: { type: 'integer', minimum: 0 },
+                                minFrequency: { type: 'integer', minimum: 0 },
+                                maxFrequency: { type: 'integer', minimum: 0 },
+                            },
+                            required: ['minWords', 'maxWords', 'minFrequency', 'maxFrequency'],
+                        },
+                    },
+                    required: ['onStatuses', 'onStates', 'rules'],
+                },
+                repeat: {
+                    type: 'object',
+                    properties: {
+                        onStatuses: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        onStates: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        rules: {
+                            type: 'object',
+                            properties: {
+                                minWords: { type: 'integer', minimum: 0 },
+                                maxWords: { type: 'integer', minimum: 0 },
+                                minFrequency: { type: 'integer', minimum: 0 },
+                                maxFrequency: { type: 'integer', minimum: 0 },
+                            },
+                            required: ['minWords', 'maxWords', 'minFrequency', 'maxFrequency'],
+                        },
+                    },
+                    required: ['onStatuses', 'onStates', 'rules'],
+                },
+                condensed: {
+                    type: 'object',
+                    properties: {
+                        onStatuses: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        onStates: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        rules: {
+                            type: 'object',
+                            properties: {
+                                minWords: { type: 'integer', minimum: 0 },
+                                maxWords: { type: 'integer', minimum: 0 },
+                                minFrequency: { type: 'integer', minimum: 0 },
+                                maxFrequency: { type: 'integer', minimum: 0 },
+                            },
+                            required: ['minWords', 'maxWords', 'minFrequency', 'maxFrequency'],
+                        },
+                    },
+                    required: ['onStatuses', 'onStates', 'rules'],
+                },
+                fastForward: {
+                    type: 'object',
+                    properties: {
+                        onStatuses: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        onStates: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        rules: {
+                            type: 'object',
+                            properties: {
+                                minWords: { type: 'integer', minimum: 0 },
+                                maxWords: { type: 'integer', minimum: 0 },
+                                minFrequency: { type: 'integer', minimum: 0 },
+                                maxFrequency: { type: 'integer', minimum: 0 },
+                            },
+                            required: ['minWords', 'maxWords', 'minFrequency', 'maxFrequency'],
+                        },
+                        rateByComprehension: {
+                            type: 'object',
+                            properties: {
+                                enabled: { type: 'boolean' },
+                                minimumPercent: { type: 'integer', minimum: 0, maximum: 99 },
+                            },
+                            required: ['enabled', 'minimumPercent'],
+                        },
+                    },
+                    required: ['onStatuses', 'onStates', 'rules', 'rateByComprehension'],
+                },
+                wordVisibility: {
+                    type: 'object',
+                    properties: {
+                        onStatuses: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        onStates: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: { enabled: { type: 'boolean' } },
+                                required: ['enabled'],
+                            },
+                        },
+                        rules: {
+                            type: 'object',
+                            properties: {
+                                minWords: { type: 'integer', minimum: 0 },
+                                maxWords: { type: 'integer', minimum: 0 },
+                                minFrequency: { type: 'integer', minimum: 0 },
+                                maxFrequency: { type: 'integer', minimum: 0 },
+                            },
+                            required: ['minWords', 'maxWords', 'minFrequency', 'maxFrequency'],
+                        },
+                        hideWordsIndividuallyUntilThreshold: { type: 'boolean' },
+                        wholeSubtitleMatchThreshold: {
+                            type: 'number',
+                            minimum: minimumWholeSubtitleMatchThreshold,
+                            maximum: maximumWholeSubtitleMatchThreshold,
+                        },
+                    },
+                    required: [
+                        'onStatuses',
+                        'onStates',
+                        'rules',
+                        'hideWordsIndividuallyUntilThreshold',
+                        'wholeSubtitleMatchThreshold',
+                    ],
+                },
+            },
+            required: ['selectOnPause', 'autoPause', 'repeat', 'condensed', 'fastForward', 'wordVisibility'],
         },
         dictionaryTokenAnnotationConfig: {
             type: 'object',
@@ -508,6 +720,9 @@ const settingsSchema = {
         repeatCountPreference: {
             type: 'number',
         },
+        repeatsBeforeShowingSubtitles: {
+            type: 'integer',
+        },
         autoPauseResumeMode: {
             type: 'string',
             enum: ['manual', 'fixed', 'subtitleLength'],
@@ -529,11 +744,13 @@ const settingsSchema = {
         },
         subtitleVisibility: {
             type: 'string',
-            enum: ['whenDue', 'whilePaused'],
+            enum: ['whenDue', 'whilePaused', 'whileManuallyPaused'],
         },
         rememberPlaybackModes: {
             type: 'boolean',
         },
+        recipes: { type: 'array' },
+        activeRecipeId: { type: ['integer', 'null'] },
         lastPlaybackModes: {
             type: 'array',
             items: {
@@ -554,6 +771,18 @@ const settingsSchema = {
         keyBindSet: {
             type: 'object',
             properties: {
+                cycleRecipesForward: { $ref: '/KeyBind' },
+                cycleRecipesBackward: { $ref: '/KeyBind' },
+                toggleRecipe1: { $ref: '/KeyBind' },
+                toggleRecipe2: { $ref: '/KeyBind' },
+                toggleRecipe3: { $ref: '/KeyBind' },
+                toggleRecipe4: { $ref: '/KeyBind' },
+                toggleRecipe5: { $ref: '/KeyBind' },
+                toggleRecipe6: { $ref: '/KeyBind' },
+                toggleRecipe7: { $ref: '/KeyBind' },
+                toggleRecipe8: { $ref: '/KeyBind' },
+                toggleRecipe9: { $ref: '/KeyBind' },
+                toggleRecipe10: { $ref: '/KeyBind' },
                 togglePlay: { $ref: '/KeyBind' },
                 toggleAutoPause: { $ref: '/KeyBind' },
                 toggleCondensedPlayback: { $ref: '/KeyBind' },
@@ -592,7 +821,6 @@ const settingsSchema = {
                 toggleRepeat: { $ref: '/KeyBind' },
                 toggleSubtitleVisibility: { $ref: '/KeyBind' },
                 cycleAutoPauseResumeMode: { $ref: '/KeyBind' },
-                cycleLearningMode: { $ref: '/KeyBind' },
                 markLineGotIt: { $ref: '/KeyBind' },
                 markLineMissed: { $ref: '/KeyBind' },
                 revealLine: { $ref: '/KeyBind' },
@@ -810,18 +1038,8 @@ const settingsSchema = {
         mandarinEditionEnabled: {
             type: 'boolean',
         },
-        learningMode: {
-            type: 'string',
-            enum: ['off', 'justWatch', 'ears', 'listenFirst'],
-        },
-        learningModeSnapshot: {
-            type: 'object',
-            properties: {
-                subtitleVisibility: { type: 'string', enum: ['whenDue', 'whilePaused'] },
-                autoPausePreference: { type: 'number' },
-                autoPauseResumeMode: { type: 'string', enum: ['manual', 'fixed', 'subtitleLength'] },
-                repeatCountPreference: { type: 'number' },
-            },
+        hideUntilRevealed: {
+            type: 'boolean',
         },
         subtitleAboveThumbnail: {
             type: 'boolean',
@@ -939,7 +1157,7 @@ const validateAllKnownKeys = (object: any, path: string[]) => {
 
         const value = object[key];
 
-        if (typeof value === 'object' && !Array.isArray(value)) {
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
             validateAllKnownKeys(value, [...path, key]);
         }
     }

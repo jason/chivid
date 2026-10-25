@@ -1,3 +1,5 @@
+import project from '@project/common/project';
+import { useSettings } from '@project/extension/src/ui/hooks/use-settings';
 import type {
     AsbPlayerToVideoCommandV2,
     ControlType,
@@ -12,7 +14,6 @@ import type {
     PlaybackRateToVideoMessage,
     PlayMode,
     PlayModeMessage,
-    CycleLearningModeMessage,
     ToggleSubtitlesMessage,
 } from '@project/common';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
@@ -48,6 +49,7 @@ const saveLastControlType = async (controlType: ControlType): Promise<void> => {
 
 const MobileVideoOverlayUi = () => {
     const location = useMobileVideoOverlayLocation();
+    const { settings: recipeSettings, onSettingsChanged } = useSettings();
     const hiddenRef = useRef<boolean>(false);
 
     const handleMineSubtitle = useCallback(async () => {
@@ -179,19 +181,6 @@ const MobileVideoOverlayUi = () => {
         [location]
     );
 
-    const handleCycleLearningMode = useCallback(() => {
-        if (!location) {
-            return;
-        }
-
-        const command: MobileOverlayToVideoCommand<CycleLearningModeMessage> = {
-            sender: 'asbplayer-mobile-overlay-to-video',
-            message: { command: 'cycleLearningMode' },
-            src: location.src,
-        };
-        void browser.runtime.sendMessage(command);
-    }, [location]);
-
     const handleToggleSubtitles = useCallback(() => {
         if (!location) {
             return;
@@ -247,7 +236,7 @@ const MobileVideoOverlayUi = () => {
         }
     }, []);
 
-    const { initialized: i18nInitialized } = useI18n({ language: model?.language ?? 'en' });
+    const { initialized: i18nInitialized } = useI18n({ language: model?.language ?? project.defaultLanguage });
     const { lastControlType, setLastControlType } = useLastScrollableControlType({
         isMobile,
         saveLastControlType,
@@ -278,8 +267,10 @@ const MobileVideoOverlayUi = () => {
                     onOffset={handleOffset}
                     onSeek={handleSeek}
                     onPlaybackRate={handlePlaybackRate}
+                    recipes={recipeSettings?.recipes}
+                    activeRecipeId={recipeSettings?.activeRecipeId}
+                    onRecipeSelected={(activeRecipeId) => onSettingsChanged({ activeRecipeId })}
                     onPlayModeSelected={handlePlayModeSelected}
-                    onCycleLearningMode={handleCycleLearningMode}
                     onToggleSubtitles={handleToggleSubtitles}
                     onPlayModeSelectorOpened={handlePlayModeSelectorOpened}
                     onPlayModeSelectorClosed={handlePlayModeSelectorClosed}

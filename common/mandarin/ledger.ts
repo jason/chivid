@@ -1,5 +1,4 @@
 import Dexie from 'dexie';
-import type { LearningModeName } from '@project/common/settings';
 import type { RecognitionResult } from '@project/common/mandarin/line-recognition';
 
 export const ledgerSchemaVersion = 1;
@@ -20,7 +19,8 @@ export type LedgerEvent =
           readonly end: number;
           readonly sourceUrl: string;
           readonly title: string;
-          readonly mode: LearningModeName;
+          /** Name of the active recipe when the mark was made, or null for none. */
+          readonly recipe: string | null;
       }
     | {
           readonly v: typeof ledgerSchemaVersion;

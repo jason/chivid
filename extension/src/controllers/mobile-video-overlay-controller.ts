@@ -160,8 +160,6 @@ export class MobileVideoOverlayController {
                 const command = message as MobileOverlayToVideoCommand<PlayModeMessage>;
                 this._playModeSelectorOpen = true;
                 this._context.togglePlayMode(command.message.playMode);
-            } else if (message.message.command === 'cycleLearningMode') {
-                this._context.cycleLearningMode();
             } else if (message.message.command === 'playback-mode-selector-opened') {
                 this._playModeSelectorOpen = true;
             } else if (message.message.command === 'hidden') {
@@ -230,9 +228,6 @@ export class MobileVideoOverlayController {
             playModes: Array.from(this._playModes),
             overlayInstanceId: this._overlayInstanceId,
             themeType,
-            learningMode: this._context.learningController.active
-                ? this._context.learningController.currentMode
-                : undefined,
         };
         return model;
     }
@@ -306,7 +301,7 @@ export class MobileVideoOverlayController {
         const smallScreen = videoRect.height < smallScreenVideoHeightThreshold;
         const height = smallScreen ? 64 : 108;
         const tooltips = !smallScreen;
-        const width = Math.min(window.innerWidth, this._context.learningController.active ? 480 : 410);
+        const width = Math.min(window.innerWidth, 410);
         const src = encodeURIComponent(this._context.registeredVideoSrc);
 
         return { width, height, anchor, src, tooltips };

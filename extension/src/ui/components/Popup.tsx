@@ -251,6 +251,7 @@ const Popup = ({
                             extensionSupportsSeekableTrackSetting
                             extensionSupportsAutoCopyableTrackSetting
                             extensionSupportsDictionaryTokenStatusDisplayAlpha
+                            supportsDictionaryPlayback
                             extensionSupportsDictionaryYomitanMecab
                             extensionSupportsSubtitleTrackSelectorInWebApp
                             extensionSupportsSubtitleListCustomization

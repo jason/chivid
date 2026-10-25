@@ -55,7 +55,6 @@ describe('KeyBindings playback modes', () => {
             togglePlayMode: jest.fn(),
             markLine: jest.fn(),
             revealLine: jest.fn(),
-            cycleLearningMode: jest.fn(),
         }) as unknown as Binding & {
             markLine: jest.Mock;
             revealLine: jest.Mock;
@@ -96,6 +95,37 @@ describe('KeyBindings playback modes', () => {
         pressKey('R', 82, true);
 
         expect(context.revealLine).not.toHaveBeenCalled();
+    });
+
+    it('ignores recipe shortcuts until subtitles are loaded and after they are cleared', () => {
+        const selectRecipe = jest.fn<Binding['selectRecipe']>().mockResolvedValue(undefined);
+        const context = {
+            synced: true,
+            subtitleController: { subtitles: [] as unknown[] },
+            selectRecipe,
+        } as unknown as Binding;
+        const binding = new KeyBindings();
+        bindings.push(binding);
+        binding.setKeyBindSet(context, {
+            ...defaultSettings.keyBindSet,
+            cycleRecipesForward: { keys: 'r' },
+            toggleRecipe1: { keys: 's' },
+        });
+        const press = (key: string) => {
+            for (const type of ['keydown', 'keyup']) {
+                const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+                Object.defineProperty(event, 'keyCode', { value: key.toUpperCase().charCodeAt(0) });
+                document.dispatchEvent(event);
+            }
+        };
+        for (const key of ['r', 's']) press(key);
+        expect(selectRecipe).not.toHaveBeenCalled();
+        context.subtitleController.subtitles = [makeSubtitle({ text: 'subtitle' })];
+        for (const key of ['r', 's']) press(key);
+        expect(selectRecipe.mock.calls.map(([action]) => action)).toEqual(['cycleForward', 0]);
+        context.subtitleController.subtitles = [];
+        for (const key of ['r', 's']) press(key);
+        expect(selectRecipe).toHaveBeenCalledTimes(2);
     });
 
     it('repeatedly seeks and selects matching tokens without taking focus from the video', () => {

@@ -1,3 +1,7 @@
+import PlaybackEngine, {
+    formatRecipeNotification,
+    formatRecipeSettingLockedNotification,
+} from '@project/common/playback/playback-engine';
 import {
     adjacentSubtitle,
     buildSubtitleTracks,
@@ -10,7 +14,27 @@ import {
     surroundingSubtitlesAroundInterval,
     timeDurationDisplay,
 } from '@project/common/util';
+import {
+    formatPlaybackModeNotifications,
+    playbackModeNotificationJoin,
+} from '@project/common/playback/controllers/playback-mode-controller';
+import type {
+    PlaybackModeNotificationFormatOptions,
+    PlayModeTransition,
+} from '@project/common/playback/controllers/playback-mode-controller';
+import type { SubtitleOffsetOptions } from '@project/common/playback/playback-engine';
+
+import type { RecipeShortcut } from '@project/common/key-binder/key-binder';
+
 import { asbError, asbTrace, asbWarn } from '@project/common/util/log';
+import {
+    cropAndResize,
+    PostMineAction,
+    PostMinePlayback,
+    StartRecordingErrorCode,
+    StopRecordingErrorCode,
+    VideoDataUiOpenReason,
+} from '@project/common';
 import type {
     AckMessage,
     AnkiUiSavedState,
@@ -67,32 +91,23 @@ import type {
     DictionaryBuildAnkiCacheStateMessage,
     DictionaryBuildWaniKaniCacheStateMessage,
 } from '@project/common';
+
 import {
-    cropAndResize,
-    PostMineAction,
-    PostMinePlayback,
-    StartRecordingErrorCode,
-    StopRecordingErrorCode,
-    VideoDataUiOpenReason,
-} from '@project/common';
-import type { AsbplayerSettings, SeekableTracks, StreamingMediaFragmentFormatSetting } from '@project/common/settings';
-import {
+    activeRecipe,
+    effectiveSettings,
+    recipeIdForShortcut,
     calculateSeekableTracksValue,
     extractAnkiSettings,
     PauseOnHoverMode,
     SettingsProvider,
     SubtitleListPreference,
+    SubtitleVisibility,
     isSaveOnlySettings,
 } from '@project/common/settings';
+import type { AsbplayerSettings, SeekableTracks, StreamingMediaFragmentFormatSetting } from '@project/common/settings';
+
 import { SubtitleReader } from '@project/common/subtitle-reader';
-import {
-    formatPlaybackModeNotifications,
-    playbackModeNotificationJoin,
-} from '@project/common/playback/controllers/playback-mode-controller';
-import type {
-    PlaybackModeNotificationFormatOptions,
-    PlayModeTransition,
-} from '@project/common/playback/controllers/playback-mode-controller';
+
 import AnkiUiController from '@project/extension/src/controllers/anki-ui-controller';
 import ControlsController from '@project/extension/src/controllers/controls-controller';
 import DragController from '@project/extension/src/controllers/drag-controller';
@@ -119,8 +134,7 @@ import { ExtensionDictionaryStorage } from '@project/extension/src/services/exte
 import { HoveredToken } from '@project/common/annotations';
 import { v4 as uuidv4 } from 'uuid';
 import { debounced } from '@project/extension/src/services/debounced';
-import PlaybackEngine from '@project/common/playback/playback-engine';
-import type { SubtitleOffsetOptions } from '@project/common/playback/playback-engine';
+
 import VideoFrameTimingDriver from '@project/common/playback/timing/video-frame-timing-driver';
 import InterpolatedContentClock from '@project/extension/src/services/interpolated-content-clock';
 import { mediaSourceIdentity } from '@project/extension/src/pages/util';
@@ -221,6 +235,7 @@ export default class Binding {
     private _lastProfile?: string;
     private _subtitleSource?: SubtitleSource;
     private _subtitleRefreshId = 0;
+    private recipeSelectionQueue: Promise<void> = Promise.resolve();
 
     readonly video: HTMLMediaElement;
     readonly hasPageScript: boolean;
@@ -310,7 +325,7 @@ export default class Binding {
         this.mobileVideoOverlayController = new MobileVideoOverlayController(this, OffsetAnchor.top);
         this.subtitleController.onOffsetChange = (offset) => {
             if (this._subtitleSource !== undefined) this._subtitleSource.offset = offset;
-            this.playbackEngine.subtitlesChanged(this.subtitleController.subtitles);
+            this.subtitlesChanged();
             return this.mobileVideoOverlayController.updateModel();
         };
         this.mobileGestureController = new MobileGestureController(this);
@@ -396,13 +411,32 @@ export default class Binding {
         };
     }
 
-    togglePlayMode(targetMode: PlayMode) {
-        this.playbackEngine.togglePlaybackMode(targetMode);
+    selectRecipe(action: RecipeShortcut): Promise<void> {
+        const selection = this.recipeSelectionQueue.then(() => this._selectRecipe(action));
+        this.recipeSelectionQueue = selection.catch(() => undefined);
+        return selection;
     }
 
-    cycleLearningMode(): void {
-        this.learningController.cycleMode();
-        void this.mobileVideoOverlayController.updateModel();
+    private async _selectRecipe(action: RecipeShortcut): Promise<void> {
+        const settings = await this.settings.getAll();
+        const activeRecipeId = recipeIdForShortcut(settings, action);
+        if (activeRecipeId === undefined) return;
+        await this.settings.set({ activeRecipeId });
+        const command: VideoToExtensionCommand<SettingsUpdatedMessage> = {
+            sender: 'asbplayer-video',
+            src: this._registeredVideoSrc,
+            message: { command: 'settings-updated' },
+        };
+        try {
+            await browser.runtime.sendMessage(command);
+        } finally {
+            await this._refreshSettings();
+        }
+        asbTrace('playback/recipe', 'Recipe shortcut applied', {
+            action,
+            previousRecipeId: settings.activeRecipeId,
+            activeRecipeId,
+        });
     }
 
     markLine(result: 'got' | 'missed'): void {
@@ -439,7 +473,6 @@ export default class Binding {
             revealCurrentLines: () => this.subtitleController.revealCurrentLines(),
             rehideLines: (indexes) => this.subtitleController.rehideLines(indexes),
             seek: (timestampMs) => void this.seek(timestampMs),
-            applyPreset: (preset) => this.playbackEngine.applyPlaybackPreset(preset),
             recordEvent: (event) => {
                 const command: VideoToExtensionCommand<RecordLearningEventMessage> = {
                     sender: 'asbplayer-video',
@@ -452,6 +485,14 @@ export default class Binding {
             sourceUrl: () => window.location.href,
             title: () => document.title,
         });
+    }
+
+    togglePlayMode(targetMode: PlayMode) {
+        this.playbackEngine.togglePlaybackMode(targetMode);
+    }
+
+    subtitlesChanged(options?: { readonly timingChanged?: boolean }): void {
+        this.playbackEngine.subtitlesChanged(this.subtitleController.subtitles, options);
     }
 
     adjustPlaybackRate(delta: number): void {
@@ -606,6 +647,13 @@ export default class Binding {
                 }
             ),
             callbacks: {
+                selectToken: (target, options) =>
+                    this.subtitleController.selectToken(target, {
+                        ...options,
+                        autoPause: true,
+                        scrollIntoView: false,
+                    }),
+                clearAutoPauseTokenSelection: () => this.subtitleController.clearAutoPauseTokenSelection(),
                 pause: () => this.pause(),
                 play: async () => {
                     await this.play();
@@ -618,6 +666,7 @@ export default class Binding {
                 },
                 setSubtitleOffset: (offset, options) => this.subtitleController.offset(offset, !options.notifyPlayer),
                 playbackStateChanged: (state) => {
+                    this.subtitleController.setPlaybackPaused(state.paused);
                     this.subtitleController.playbackStateChanged(state);
                     this._notifyPlaybackState(state);
                 },
@@ -651,6 +700,17 @@ export default class Binding {
                         })
                         .catch((error) => asbError('video/binding', error));
                 },
+                settingChangeBlocked: (settingLocKey) =>
+                    this.subtitleController.notification({
+                        text: formatRecipeSettingLockedNotification(settingLocKey).text(i18n.t),
+                    }),
+                recipeChanged: (name, transition) => {
+                    this._handlePlaybackModesChanged(transition);
+                    if (!this.synced || this.subtitleController.subtitles.length === 0) return;
+                    this.subtitleController.notification({
+                        text: formatRecipeNotification(name).text(i18n.t),
+                    });
+                },
                 playbackModesChanged: (transition) => {
                     const notification = this._handlePlaybackModesChanged(transition);
                     if (notification) this.subtitleController.notification({ text: notification });
@@ -671,6 +731,9 @@ export default class Binding {
                         includeTransition: false,
                     });
                     if (playbackMode) notifications.push(playbackMode);
+                    if (settings.recipeName !== null) {
+                        notifications.push(formatRecipeNotification(settings.recipeName).text(i18n.t));
+                    }
                     if (notifications.length) {
                         this.subtitleController.notification({
                             text: notifications.join(playbackModeNotificationJoin),
@@ -1085,7 +1148,7 @@ export default class Binding {
                     }
                     case 'playbackRate': {
                         const playbackRateMessage = request.message as PlaybackRateToVideoMessage;
-                        this.playbackEngine.playbackRateChanged(playbackRateMessage.value);
+                        this.playbackEngine.playbackRateChanged(playbackRateMessage.value, { notifyBlocked: true });
                         break;
                     }
                     case 'playMode': {
@@ -1426,8 +1489,9 @@ export default class Binding {
         const profileChanged = this._lastProfile !== activeProfile;
         this._lastProfile = activeProfile;
         this.playbackEngine.profileChanged(activeProfile);
-        const currentSettings = await this.settings.getAll();
-        this.playbackEngine.settingsChanged(currentSettings);
+        const underlyingSettings = await this.settings.getAll();
+        const currentSettings = effectiveSettings(underlyingSettings);
+        this.playbackEngine.settingsChanged(underlyingSettings);
         this._seekDurationMs = currentSettings.seekDuration * 1000;
         this._speedChangeStep = currentSettings.speedChangeStep;
         this.seekableTracks = currentSettings.seekableTracks;
@@ -1448,7 +1512,10 @@ export default class Binding {
         this.pauseOnHoverMode = currentSettings.pauseOnHoverMode;
 
         this.subtitleController.displaySubtitles = currentSettings.streamingDisplaySubtitles;
-        this.learningController.settingsChanged(currentSettings);
+        this.learningController.settingsChanged({
+            ...currentSettings,
+            recipeName: activeRecipe(currentSettings)?.name ?? null,
+        });
         this.subtitleController.bottomSubtitlePositionOffset = currentSettings.subtitlePositionOffset;
         this.subtitleController.topSubtitlePositionOffset = currentSettings.topSubtitlePositionOffset;
         this.subtitleController.setSubtitlesWidth(currentSettings.subtitlesWidth, currentSettings.subtitlesWidthUnit);
@@ -1456,6 +1523,9 @@ export default class Binding {
         this.subtitleController.surroundingSubtitlesTimeRadius = currentSettings.surroundingSubtitlesTimeRadius;
         this.subtitleController.autoCopyCurrentSubtitle = currentSettings.autoCopyCurrentSubtitle;
         this.subtitleController.dictionaryTrackSettings = currentSettings.dictionaryTracks;
+        this.subtitleController.setAdaptiveWordVisibilityEnabled(
+            currentSettings.subtitleVisibility === SubtitleVisibility.whenDue
+        );
         this.subtitleController.autoCopyableTracks = currentSettings.autoCopyableTracks;
 
         const convertNetflixRubyChanged =
@@ -2157,7 +2227,7 @@ export default class Binding {
             this._playbackPositionKeys(nonEmptyTrackIndexes, subtitleFileNames),
             { isNewSource: false }
         );
-        this.playbackEngine.subtitlesChanged(this.subtitleController.subtitles);
+        this.subtitlesChanged();
 
         this.ankiUiSavedState = undefined;
         void this.mobileVideoOverlayController.updateModel();
@@ -2178,7 +2248,7 @@ export default class Binding {
             this._playbackPositionKeys(nonEmptyTrackIndexes, subtitleFileNames),
             { isNewSource: true }
         );
-        this.playbackEngine.subtitlesChanged(this.subtitleController.subtitles);
+        this.subtitlesChanged();
 
         this.subtitleController.showLoadedMessage(nonEmptyTrackIndexes);
         this.ankiUiSavedState = undefined;

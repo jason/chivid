@@ -489,10 +489,6 @@ export interface SubtitleSettingsToVideoMessage extends Message {
     readonly value: SubtitleSettings;
 }
 
-export interface CycleLearningModeMessage extends Message {
-    readonly command: 'cycleLearningMode';
-}
-
 export interface PlayModeMessage extends Message {
     readonly command: 'playMode';
     readonly playMode: PlayMode;

@@ -1,7 +1,7 @@
 import { asbError } from '@project/common/util/log';
 import type { CopySubtitleMessage, SubtitleModel } from '@project/common';
 import { PostMineAction } from '@project/common';
-import type { DefaultKeyBinder, KeyBinder, LearningShortcutName } from '@project/common/key-binder';
+import type { DefaultKeyBinder, KeyBinder, RecipeShortcut, LearningShortcutName } from '@project/common/key-binder';
 import type { SeekableTracks, TokenJumpTarget, TokenStatus } from '@project/common/settings';
 import type { ExtensionMessage } from '@project/common/app/services/chrome-extension';
 import type ChromeExtension from '@project/common/app/services/chrome-extension';
@@ -307,6 +307,15 @@ export default class AppKeyBinder implements KeyBinder {
         return this.defaultKeyBinder.bindUnblurTrack(onUnblurTrack, disabledGetter, useCapture);
     }
 
+    bindLearningShortcut(
+        name: LearningShortcutName,
+        onShortcut: (event: KeyboardEvent) => void,
+        disabledGetter: () => boolean,
+        useCapture?: boolean | undefined
+    ): () => void {
+        return this.defaultKeyBinder.bindLearningShortcut(name, onShortcut, disabledGetter, useCapture);
+    }
+
     bindOpenStatistics(
         onOpenStatistics: (event: KeyboardEvent) => void,
         disabledGetter: () => boolean,
@@ -383,6 +392,15 @@ export default class AppKeyBinder implements KeyBinder {
         return this.defaultKeyBinder.bindToggleSidePanel(onToggleSidePanel, disabledGetter, useCapture);
     }
 
+    bindRecipes(
+        onRecipe: (event: KeyboardEvent, action: RecipeShortcut) => void,
+        disabledGetter: () => boolean,
+        subtitlesGetter: () => readonly SubtitleModel[] | undefined,
+        capture?: boolean
+    ): () => void {
+        return this.defaultKeyBinder.bindRecipes(onRecipe, disabledGetter, subtitlesGetter, capture);
+    }
+
     bindToggleRepeat(
         onToggleRepeat: (event: KeyboardEvent) => void,
         disabledGetter: () => boolean,
@@ -413,15 +431,6 @@ export default class AppKeyBinder implements KeyBinder {
             disabledGetter,
             useCapture
         );
-    }
-
-    bindLearningShortcut(
-        name: LearningShortcutName,
-        onShortcut: (event: KeyboardEvent) => void,
-        disabledGetter: () => boolean,
-        useCapture?: boolean | undefined
-    ): () => void {
-        return this.defaultKeyBinder.bindLearningShortcut(name, onShortcut, disabledGetter, useCapture);
     }
 
     bindAdjustSubtitlePositionOffset(

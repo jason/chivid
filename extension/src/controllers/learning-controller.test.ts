@@ -1,18 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
-import { AutoPausePreference, PlayMode } from '@project/common';
 import type { IndexedSubtitleModel } from '@project/common';
 import type { NewLedgerEvent } from '@project/common/mandarin/ledger';
-import { AutoPauseResumeMode, calculateSeekableTracksValue, SubtitleVisibility } from '@project/common/settings';
-import type { LearningModeName } from '@project/common/settings';
+import { calculateSeekableTracksValue } from '@project/common/settings';
 import LearningController from '@project/extension/src/controllers/learning-controller';
 import type { LearningHost } from '@project/extension/src/controllers/learning-controller';
-
-const learnerOwn = {
-    subtitleVisibility: SubtitleVisibility.whenDue,
-    autoPausePreference: AutoPausePreference.atStartAndEnd,
-    autoPauseResumeMode: AutoPauseResumeMode.subtitleLength,
-    repeatCountPreference: 3,
-};
 
 const subtitle = (index: number, start: number, end: number, text: string): IndexedSubtitleModel => ({
     index,
@@ -30,9 +21,9 @@ class FakeHost implements LearningHost {
     hideUntilRevealed = false;
     events: NewLedgerEvent[] = [];
     notes: string[] = [];
-    presets: Parameters<LearningHost['applyPreset']>[0][] = [];
     dueIndexes = [1];
-    bound = true;
+    rehidden: number[][] = [];
+    seeks: number[] = [];
 
     setHideUntilRevealed(hide: boolean) {
         this.hideUntilRevealed = hide;
@@ -40,18 +31,11 @@ class FakeHost implements LearningHost {
     revealCurrentLines() {
         return this.dueIndexes;
     }
-    rehidden: number[][] = [];
-    seeks: number[] = [];
     rehideLines(indexes: readonly number[]) {
         this.rehidden.push([...indexes]);
     }
     seek(timestampMs: number) {
         this.seeks.push(timestampMs);
-    }
-    applyPreset(preset: Parameters<LearningHost['applyPreset']>[0]) {
-        if (!this.bound) return false;
-        this.presets.push(preset);
-        return true;
     }
     recordEvent(event: NewLedgerEvent) {
         this.events.push(event);
@@ -67,40 +51,36 @@ class FakeHost implements LearningHost {
     }
 }
 
-const controllerIn = (mode: LearningModeName, enabled = true) => {
+const controllerWith = ({ enabled = true, hideUntilRevealed = false, recipeName = null as string | null } = {}) => {
     const host = new FakeHost();
     const controller = new LearningController(host);
     controller.settingsChanged({
         mandarinEditionEnabled: enabled,
-        learningMode: mode,
-        learningModeSnapshot: learnerOwn,
+        hideUntilRevealed,
         seekableTracks: calculateSeekableTracksValue([0]),
-        ...learnerOwn,
+        recipeName,
     });
     return { host, controller };
 };
 
 describe('LearningController', () => {
     it('does nothing at all while the Mandarin Edition flag is off', () => {
-        const { host, controller } = controllerIn('ears', false);
-        controller.cycleMode();
+        const { host, controller } = controllerWith({ enabled: false, hideUntilRevealed: true });
         controller.mark('got');
         controller.reveal();
+        controller.pressSegmentStart();
         expect(host.hideUntilRevealed).toBe(false);
-        expect(host.presets).toEqual([]);
         expect(host.events).toEqual([]);
         expect(host.notes).toEqual([]);
     });
 
-    it('hides text until revealed in listening modes only', () => {
-        expect(controllerIn('ears').host.hideUntilRevealed).toBe(true);
-        expect(controllerIn('listenFirst').host.hideUntilRevealed).toBe(true);
-        expect(controllerIn('justWatch').host.hideUntilRevealed).toBe(false);
-        expect(controllerIn('off').host.hideUntilRevealed).toBe(false);
+    it('hides text until revealed only when the active recipe asks for it', () => {
+        expect(controllerWith({ hideUntilRevealed: true }).host.hideUntilRevealed).toBe(true);
+        expect(controllerWith({ hideUntilRevealed: false }).host.hideUntilRevealed).toBe(false);
     });
 
-    it('records one audio event for the line just heard while its text is hidden', () => {
-        const { host, controller } = controllerIn('ears');
+    it('records one audio event, tagged with the active recipe, for the line just heard while hidden', () => {
+        const { host, controller } = controllerWith({ hideUntilRevealed: true, recipeName: 'Ears' });
         controller.mark('got');
         expect(host.events).toEqual([
             {
@@ -112,14 +92,14 @@ describe('LearningController', () => {
                 end: 3500,
                 sourceUrl: 'https://www.youtube.com/watch?v=example',
                 title: 'Example video',
-                mode: 'ears',
+                recipe: 'Ears',
             },
         ]);
         expect(host.notes).toEqual(['mandarin.gotIt']);
     });
 
     it('records nothing for a line after it has been revealed', () => {
-        const { host, controller } = controllerIn('listenFirst');
+        const { host, controller } = controllerWith({ hideUntilRevealed: true });
         controller.reveal();
         controller.mark('got');
         expect(host.events).toEqual([]);
@@ -127,69 +107,42 @@ describe('LearningController', () => {
     });
 
     it('records nothing for a line the player displayed on its own', () => {
-        const { host, controller } = controllerIn('justWatch');
+        const { host, controller } = controllerWith();
         controller.linesDisplayed([1]);
         controller.mark('missed');
         expect(host.events).toEqual([]);
     });
 
     it('does not record the same mark twice', () => {
-        const { host, controller } = controllerIn('ears');
+        const { host, controller } = controllerWith({ hideUntilRevealed: true });
         controller.mark('missed');
         controller.mark('missed');
         expect(host.events).toHaveLength(1);
     });
 
     it('forgets reveals when subtitles change', () => {
-        const { host, controller } = controllerIn('ears');
+        const { host, controller } = controllerWith({ hideUntilRevealed: true });
         controller.reveal();
         controller.subtitlesChanged();
         controller.mark('got');
         expect(host.events).toHaveLength(1);
     });
 
-    it('cycles from off into Just Watch, saving the learner settings', () => {
-        const { host, controller } = controllerIn('off');
-        controller.cycleMode();
-        expect(controller.currentMode).toBe('justWatch');
-        expect(host.presets[0].playModes).toEqual([PlayMode.normal]);
-        expect(host.presets[0].alsoSave).toEqual({ learningMode: 'justWatch', learningModeSnapshot: learnerOwn });
-        expect(host.notes).toEqual(['mandarin.mode.justWatch']);
-    });
-
-    it('restores the learner settings when cycling back to off', () => {
-        const { host, controller } = controllerIn('listenFirst');
-        controller.cycleMode();
-        expect(controller.currentMode).toBe('off');
-        expect(host.presets[0].settings).toEqual(learnerOwn);
-        expect(host.presets[0].playModes).toBeUndefined();
-        expect(host.hideUntilRevealed).toBe(false);
-    });
-
-    it('turns on hiding when cycling into Ears', () => {
-        const { host, controller } = controllerIn('justWatch');
-        controller.cycleMode();
-        expect(controller.currentMode).toBe('ears');
-        expect(host.hideUntilRevealed).toBe(true);
-    });
-
-    it('keeps the current mode when the player is not ready', () => {
-        const { host, controller } = controllerIn('justWatch');
-        host.bound = false;
-        controller.cycleMode();
-        expect(controller.currentMode).toBe('justWatch');
-        expect(host.notes).toEqual([]);
+    it('records a null recipe when none is active', () => {
+        const { host, controller } = controllerWith({ hideUntilRevealed: true });
+        controller.mark('missed');
+        expect(host.events[0]).toMatchObject({ recipe: null });
     });
 
     it('tells the learner when there is nothing to reveal', () => {
-        const { host, controller } = controllerIn('ears');
+        const { host, controller } = controllerWith({ hideUntilRevealed: true });
         host.dueIndexes = [];
         controller.reveal();
         expect(host.notes).toEqual(['mandarin.nothingToReveal']);
     });
 
-    it('loops a multi-line segment with text hidden, even in Just Watch', () => {
-        const { host, controller } = controllerIn('justWatch');
+    it('loops a multi-line segment with text hidden, even when the recipe shows text', () => {
+        const { host, controller } = controllerWith();
         host.currentTimeMs = 500;
         controller.pressSegmentStart();
         host.currentTimeMs = 2500;
@@ -204,7 +157,7 @@ describe('LearningController', () => {
     });
 
     it('re-hides the segment and replays it for a clean pass', () => {
-        const { host, controller } = controllerIn('ears');
+        const { host, controller } = controllerWith({ hideUntilRevealed: true });
         host.currentTimeMs = 500;
         controller.pressSegmentStart();
         host.currentTimeMs = 2500;
@@ -216,8 +169,8 @@ describe('LearningController', () => {
         expect(host.notes.at(-1)).toBe('mandarin.segment.cleanPass');
     });
 
-    it('restores the mode hiding when the loop stops', () => {
-        const { host, controller } = controllerIn('justWatch');
+    it('goes back to the recipe hiding when the loop stops', () => {
+        const { host, controller } = controllerWith();
         host.currentTimeMs = 500;
         controller.pressSegmentStart();
         host.currentTimeMs = 2500;
@@ -230,7 +183,7 @@ describe('LearningController', () => {
     });
 
     it('explains why a segment end was rejected', () => {
-        const { host, controller } = controllerIn('ears');
+        const { host, controller } = controllerWith({ hideUntilRevealed: true });
         controller.pressSegmentEnd();
         expect(host.notes).toEqual(['mandarin.segment.noLine']);
     });
