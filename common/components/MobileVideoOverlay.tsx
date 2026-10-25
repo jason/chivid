@@ -1,4 +1,5 @@
 import PlaybackModeButton from '@project/common/components/PlaybackModeButton';
+import LearningModeButton from '@project/common/components/LearningModeButton';
 import type { Recipe } from '@project/common/settings';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import Grid from '@mui/material/Grid';
@@ -93,6 +94,7 @@ interface Props {
     recipes?: readonly Recipe[];
     activeRecipeId?: number | null;
     onRecipeSelected?: (index: number | null) => void;
+    onLearningMenuOpenChange?: (open: boolean, rows: number) => void;
     onPlayModeSelected: (playMode: PlayMode) => void;
     onSeek: (timestamp: number) => void;
     onToggleSubtitles: () => void;
@@ -116,6 +118,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
         recipes,
         activeRecipeId,
         onRecipeSelected,
+        onLearningMenuOpenChange,
         onPlayModeSelected,
         onSeek,
         onToggleSubtitles,
@@ -441,6 +444,19 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
                         </Tooltip>
                     </Grid>
                 )}
+                {model.mandarinEditionEnabled && recipes && onRecipeSelected && (
+                    <Grid item>
+                        <LearningModeButton
+                            recipes={recipes}
+                            activeRecipeId={activeRecipeId}
+                            onRecipeSelected={onRecipeSelected}
+                            cycleKeys={model.recipeCycleKeys}
+                            disabled={model.recording}
+                            onMenuOpenChange={onLearningMenuOpenChange}
+                            tooltipProps={defaultTooltipProps}
+                        />
+                    </Grid>
+                )}
                 {(!model.emptySubtitleTrack || (!!recipes?.length && onRecipeSelected)) && (
                     <Grid item>
                         <PlaybackModeSelector
@@ -458,15 +474,15 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
                                     onMouseEnter={onMouseEnter}
                                     onMouseLeave={onMouseLeave}
                                     aria-expanded={open}
-                                    recipes={onRecipeSelected ? recipes : undefined}
+                                    recipes={onRecipeSelected && !model.mandarinEditionEnabled ? recipes : undefined}
                                     activeRecipeId={activeRecipeId}
                                     tooltipProps={defaultTooltipProps}
                                 />
                             )}
                             selectorProps={{
-                                recipes,
+                                recipes: model.mandarinEditionEnabled ? undefined : recipes,
                                 activeRecipeId,
-                                onRecipeSelect: onRecipeSelected,
+                                onRecipeSelect: model.mandarinEditionEnabled ? undefined : onRecipeSelected,
                                 playModesEnabled: !model.emptySubtitleTrack,
                                 listStyle: {
                                     display: 'flex',

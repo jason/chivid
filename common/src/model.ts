@@ -348,6 +348,10 @@ export interface MobileOverlayModel {
     themeType: 'dark' | 'light';
     playModes: PlayMode[];
     overlayInstanceId?: string;
+    /** Mandarin Edition: when true the overlay shows the icon mode button for recipes. */
+    mandarinEditionEnabled?: boolean;
+    /** Mandarin Edition: the key bound to cycle recipes forward, for the mode button tooltip. */
+    recipeCycleKeys?: string;
 }
 
 export enum ControlType {

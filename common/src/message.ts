@@ -489,6 +489,13 @@ export interface SubtitleSettingsToVideoMessage extends Message {
     readonly value: SubtitleSettings;
 }
 
+export interface MandarinModeMenuMessage extends Message {
+    readonly command: 'mandarin-mode-menu';
+    readonly open: boolean;
+    /** Height in px the overlay frame needs while the menu is open. */
+    readonly height: number;
+}
+
 export interface PlayModeMessage extends Message {
     readonly command: 'playMode';
     readonly playMode: PlayMode;

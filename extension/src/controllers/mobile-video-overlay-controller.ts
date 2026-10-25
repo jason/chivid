@@ -4,6 +4,7 @@ import type {
     UpdateMobileOverlayModelMessage,
     VideoToExtensionCommand,
     PlayModeMessage,
+    MandarinModeMenuMessage,
 } from '@project/common';
 import type Binding from '@project/extension/src/services/binding';
 import { CachingElementOverlay, OffsetAnchor } from '@project/extension/src/services/element-overlay';
@@ -160,6 +161,15 @@ export class MobileVideoOverlayController {
                 const command = message as MobileOverlayToVideoCommand<PlayModeMessage>;
                 this._playModeSelectorOpen = true;
                 this._context.togglePlayMode(command.message.playMode);
+            } else if (message.message.command === 'mandarin-mode-menu') {
+                const menu = message.message as MandarinModeMenuMessage;
+                if (menu.open) {
+                    this._playModeSelectorOpen = true;
+                    this._setFrameHeight(menu.height);
+                } else {
+                    this._setFrameHeight(this._frameParams?.height);
+                    this._playModeSelectorClosed();
+                }
             } else if (message.message.command === 'playback-mode-selector-opened') {
                 this._playModeSelectorOpen = true;
             } else if (message.message.command === 'hidden') {
@@ -202,14 +212,23 @@ export class MobileVideoOverlayController {
         const subtitleDisplaying =
             subtitles.length > 0 && this._context.subtitleController.currentSubtitle()[0] !== null;
         const timestamp = this._context.currentTimeMs;
-        const { language, clickToMineDefaultAction, themeType, streamingDisplaySubtitles, seekableTracks } =
-            await this._context.settings.get([
-                'language',
-                'clickToMineDefaultAction',
-                'themeType',
-                'streamingDisplaySubtitles',
-                'seekableTracks',
-            ]);
+        const {
+            language,
+            clickToMineDefaultAction,
+            themeType,
+            streamingDisplaySubtitles,
+            seekableTracks,
+            mandarinEditionEnabled,
+            keyBindSet,
+        } = await this._context.settings.get([
+            'language',
+            'clickToMineDefaultAction',
+            'themeType',
+            'streamingDisplaySubtitles',
+            'seekableTracks',
+            'mandarinEditionEnabled',
+            'keyBindSet',
+        ]);
         const model: MobileOverlayModel = {
             offset: subtitles.length === 0 ? 0 : subtitles[0].start - subtitles[0].originalStart,
             playbackRate: this._context.video.playbackRate,
@@ -228,6 +247,12 @@ export class MobileVideoOverlayController {
             playModes: Array.from(this._playModes),
             overlayInstanceId: this._overlayInstanceId,
             themeType,
+            ...(mandarinEditionEnabled
+                ? {
+                      mandarinEditionEnabled: true,
+                      recipeCycleKeys: keyBindSet.cycleRecipesForward.keys || undefined,
+                  }
+                : {}),
         };
         return model;
     }
@@ -238,6 +263,15 @@ export class MobileVideoOverlayController {
         }
 
         this._show();
+    }
+
+    /** Mandarin Edition: grows the existing frame in place, so an open menu is not clipped or reloaded. */
+    private _setFrameHeight(height: number | undefined) {
+        if (height === undefined) return;
+        const overlayId = encodeURIComponent(this._overlayInstanceId);
+        for (const frame of document.querySelectorAll<HTMLIFrameElement>('iframe')) {
+            if (frame.src.includes(`overlayId=${overlayId}`)) frame.style.height = `${height}px`;
+        }
     }
 
     private _playModeSelectorClosed() {

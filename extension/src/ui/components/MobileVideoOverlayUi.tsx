@@ -13,6 +13,7 @@ import type {
     PlaybackModeSelectorOpenedMessage,
     PlaybackRateToVideoMessage,
     PlayMode,
+    MandarinModeMenuMessage,
     PlayModeMessage,
     ToggleSubtitlesMessage,
 } from '@project/common';
@@ -181,6 +182,22 @@ const MobileVideoOverlayUi = () => {
         [location]
     );
 
+    const handleLearningMenuOpenChange = useCallback(
+        (open: boolean, rows: number) => {
+            if (!location) {
+                return;
+            }
+
+            const command: MobileOverlayToVideoCommand<MandarinModeMenuMessage> = {
+                sender: 'asbplayer-mobile-overlay-to-video',
+                message: { command: 'mandarin-mode-menu', open, height: 108 + rows * 36 + 24 },
+                src: location.src,
+            };
+            void browser.runtime.sendMessage(command);
+        },
+        [location]
+    );
+
     const handleToggleSubtitles = useCallback(() => {
         if (!location) {
             return;
@@ -270,6 +287,7 @@ const MobileVideoOverlayUi = () => {
                     recipes={recipeSettings?.recipes}
                     activeRecipeId={recipeSettings?.activeRecipeId}
                     onRecipeSelected={(activeRecipeId) => onSettingsChanged({ activeRecipeId })}
+                    onLearningMenuOpenChange={handleLearningMenuOpenChange}
                     onPlayModeSelected={handlePlayModeSelected}
                     onToggleSubtitles={handleToggleSubtitles}
                     onPlayModeSelectorOpened={handlePlayModeSelectorOpened}
