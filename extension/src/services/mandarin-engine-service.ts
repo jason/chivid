@@ -1,6 +1,5 @@
 import initJieba, { cut, tag } from 'jieba-wasm/web';
-import { MandarinDictionary } from '@project/common/mandarin/engine/dictionary';
-import type { CompactDictionary } from '@project/common/mandarin/engine/dictionary';
+import { MandarinDictionary, packedTextSource } from '@project/common/mandarin/engine/dictionary';
 import { pinyinProContext } from '@project/common/mandarin/engine/context-pinyin';
 import { MandarinEngine } from '@project/common/mandarin/engine/mandarin-fetcher';
 import { asbError } from '@project/common/util/log';
@@ -11,18 +10,19 @@ const assetUrl = (path: string) => (browser.runtime.getURL as (path: string) => 
 let engine: Promise<MandarinEngine> | undefined;
 
 /**
- * The Mandarin engine, loaded once per service-worker lifetime: CC-CEDICT (about 11 MB of JSON)
- * and the jieba segmenter (WebAssembly). Loading takes a moment the first time a video asks.
+ * The Mandarin engine, loaded once per document: CC-CEDICT (packed text, indexed on load and
+ * parsed per lookup) and the jieba segmenter (WebAssembly). On Chrome it lives in the offscreen
+ * document, which outlives the idle service worker; see mandarin-engine-client.ts.
  */
 export const mandarinEngine = (): Promise<MandarinEngine> => {
     engine ??= (async () => {
         const [dictionary, wasm] = await Promise.all([
-            fetch(assetUrl('/mandarin/cedict.json')).then((r) => r.json() as Promise<CompactDictionary>),
+            fetch(assetUrl('/mandarin/cedict.txt')).then((r) => r.text()),
             fetch(assetUrl('/mandarin/jieba_rs_wasm_bg.wasm')).then((r) => r.arrayBuffer()),
         ]);
         await initJieba({ module_or_path: await WebAssembly.compile(wasm) });
         return new MandarinEngine({
-            dictionary: new MandarinDictionary(dictionary),
+            dictionary: new MandarinDictionary(packedTextSource(dictionary)),
             segmenter: { cut: (text) => cut(text, false), tag: (text) => tag(text, false) },
             contextPinyin: pinyinProContext,
         });

@@ -1,3 +1,4 @@
+import { hostMandarinEngine } from '@/services/mandarin-engine-host';
 import { asbError } from '@project/common/util/log';
 import { configureExtensionLogProvider } from '@/services/extension-log-provider';
 import type {
@@ -28,6 +29,8 @@ import { base64ToBlob, bufferToBase64 } from '@project/common/base64';
 import { mp3WorkerFactory } from '@/services/mp3-worker-factory';
 
 configureExtensionLogProvider();
+// Registered at load, not on window.onload, so a request sent right after the document is created is answered.
+hostMandarinEngine();
 
 const audioRecorder = new AudioRecorder();
 

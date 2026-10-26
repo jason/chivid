@@ -556,6 +556,17 @@ describe('Journey 9: the edition look reaches the dialogs, notifications and sub
             await page.keyboard.press('Escape');
 
             await h.dropSubtitles(page);
+            // On load: how much of the episode the learner can read (only 我觉得这个的不太好 are known).
+            await page.waitForFunction(
+                () => /of characters known/.test(document.querySelector('.asbplayer-notification')?.textContent ?? ''),
+                null,
+                { timeout: 10000 }
+            );
+            const notice = await h.notificationText(page);
+            const chars = h.lines.map((l) => l.text).join('').match(/\p{Script=Han}/gu);
+            const known = chars.filter((c) => '我觉得这个的不太好'.includes(c)).length;
+            const unknown = new Set(chars.filter((c) => !'我觉得这个的不太好'.includes(c))).size;
+            assert.match(notice, new RegExp(`^${Math.floor((known / chars.length) * 100)}% of characters known · ${unknown} new`));
             await h.seekTo(page, insideLine(3));
             await h.press(page, 'Shift+L');
             const pill = await page.evaluate(() => {
@@ -583,6 +594,67 @@ describe('Journey 9: the edition look reaches the dialogs, notifications and sub
             assert.equal(list.underline, 'underline');
             assert.equal(list.pinyinAtRest, 'none');
             assert.match(list.bar, /inset/);
+        } finally {
+            await app.close();
+        }
+    });
+});
+
+describe('Journey 10: the engine stays loaded when Chrome stops the idle background worker', () => {
+    it('answers from the offscreen document after the worker restarts, without reloading the dictionary', async () => {
+        const app = await h.launch();
+        try {
+            await h.setSettings(app.worker, h.baseSettings({ mandarinEditionEnabled: false }));
+            const settingsPage = await openMiscSettings(app);
+            await settingsPage.getByLabel('Enable Mandarin Edition').check();
+            const field = settingsPage.getByTestId('mandarin-known-characters');
+            await field.fill('我觉得这个的不太好');
+            await field.blur();
+            await settingsPage.waitForTimeout(500);
+
+            const page = await h.openPlayer(app.context, server.url);
+            await h.dropSubtitles(page);
+            await h.seekTo(page, insideLine(3));
+            await page.waitForFunction(
+                () => document.querySelectorAll('.asbplayer-subtitles-container-bottom .asb-reading').length > 0,
+                null,
+                { timeout: 20000 }
+            );
+            const contexts = await app.worker.evaluate(async () =>
+                (await chrome.runtime.getContexts({})).map((c) => c.contextType)
+            );
+            assert.ok(contexts.includes('OFFSCREEN_DOCUMENT'), 'the engine runs in the offscreen document');
+
+            // Stop the worker the way Chrome does after 30 seconds idle.
+            await app.worker.evaluate(() => {
+                globalThis.chividMark = true;
+            });
+            const cdp = await app.context.browser().newBrowserCDPSession();
+            const { targetInfos } = await cdp.send('Target.getTargets');
+            const worker = targetInfos.find((t) => t.type === 'service_worker' && t.url.includes(app.extensionId));
+            await cdp.send('Target.closeTarget', { targetId: worker.targetId });
+            await page.waitForTimeout(1000);
+
+            await settingsPage.bringToFront();
+            await field.fill('我觉得这个的不太好便宜');
+            await field.blur();
+            await page.bringToFront();
+            const started = Date.now();
+            await page.waitForFunction(
+                () =>
+                    [...document.querySelectorAll('.asbplayer-subtitles-container-bottom .asb-reading')]
+                        .map((ruby) => ruby.firstChild.textContent)
+                        .join('') === '银行',
+                null,
+                { timeout: 20000 }
+            );
+            const elapsed = Date.now() - started;
+            const restarted = await app.context
+                .serviceWorkers()
+                .at(-1)
+                .evaluate(() => globalThis.chividMark === undefined);
+            assert.equal(restarted, true, 'the background worker really was restarted');
+            assert.ok(elapsed < 1500, `re-annotated in ${elapsed} ms without reloading the engine`);
         } finally {
             await app.close();
         }

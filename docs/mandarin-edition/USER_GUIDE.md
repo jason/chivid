@@ -14,6 +14,7 @@ The edition has its own Chinese engine (word splitting, pinyin in context, CC-CE
 - Hover a subtitle line to see help. Pinyin appears over characters you do not know yet, and the English meaning over the words that contain them. Words made only of characters you know stay clean.
 - Readings follow the sentence: 便宜 in "this is cheap" reads pián yi and means "cheap"; 不 and 一 show their tone changes (不是 bú shì, 一个 yí gè). A reading the engine could not confirm ends in "?".
 - **Known characters** start as the 598 characters of HSK 1–2. Edit them in Settings → Misc → Mandarin Edition: paste any text or word list into the box (only the Chinese characters are kept), or use **Add HSK characters** to add everything through a level. Open videos update within a second or two.
+- When subtitles load, a notice shows how much of the episode you can read, for example "93% of characters known · 41 new · hardest 12:40–14:10 (78%)". Material around 95% known is the sweet spot. Below about 90%, try another episode or drill the hardest stretch with the segment loop.
 - The subtitle look changes to a soft dark pill with a Chinese font, but only if you had not customized the subtitle look yourself. Turning the edition off puts asbplayer's look back, unless you have changed it since.
 
 ## Modes are recipes

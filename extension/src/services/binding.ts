@@ -2,6 +2,7 @@ import PlaybackEngine, {
     formatRecipeNotification,
     formatRecipeSettingLockedNotification,
 } from '@project/common/playback/playback-engine';
+import { comprehension, formatClock, formatShare } from '@project/common/mandarin/comprehension';
 import {
     adjacentSubtitle,
     buildSubtitleTracks,
@@ -315,7 +316,10 @@ export default class Binding {
         this.playbackEngine = this._createPlaybackEngine();
         this.learningController = this._createLearningController();
         this.subtitleController.onSubtitlesDisplayed = (indexes) => this.learningController.linesDisplayed(indexes);
-        this.subtitleController.onSubtitlesReplaced = () => this.learningController.subtitlesChanged();
+        this.subtitleController.onSubtitlesReplaced = () => {
+            this.learningController.subtitlesChanged();
+            this._showComprehension();
+        };
         this.videoDataSyncController = new VideoDataSyncController(this, this.settings);
         this.controlsController = new ControlsController(video);
         this.dragController = new DragController(video);
@@ -456,6 +460,42 @@ export default class Binding {
     }
 
     private readonly _learningTimeListener = () => this.learningController.timeChanged(this.currentTimeMs);
+
+    private _mandarinEditionEnabled = false;
+    private _mandarinKnownCharacters = '';
+
+    /**
+     * Mandarin Edition: when an episode's subtitles load, how much of it the learner can read,
+     * so they can pick material near the ~95% comfort zone and see where the hard part is.
+     */
+    private _showComprehension() {
+        if (!this._mandarinEditionEnabled || this._mandarinKnownCharacters.length === 0) return;
+        const lines = this.subtitleController.subtitles.filter((subtitle) => subtitle.track === 0);
+        const result = comprehension(lines, this._mandarinKnownCharacters);
+        if (result === undefined || result.hanCount < 20) return;
+        const replacements = {
+            share: formatShare(result.knownShare),
+            count: String([...result.newCharacters].length),
+        };
+        if (result.hardest) {
+            this.subtitleController.notification({
+                locKey: 'mandarin.comprehensionWithHardest',
+                replacements: {
+                    ...replacements,
+                    from: formatClock(result.hardest.start),
+                    to: formatClock(result.hardest.end),
+                    hardestShare: formatShare(result.hardest.knownShare),
+                },
+                autoHideDuration: 6000,
+            });
+        } else {
+            this.subtitleController.notification({
+                locKey: 'mandarin.comprehension',
+                replacements,
+                autoHideDuration: 6000,
+            });
+        }
+    }
 
     private _createLearningController(): LearningController {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -1513,6 +1553,8 @@ export default class Binding {
 
         this.subtitleController.displaySubtitles = currentSettings.streamingDisplaySubtitles;
         document.body.classList.toggle('asbplayer-mandarin', currentSettings.mandarinEditionEnabled);
+        this._mandarinEditionEnabled = currentSettings.mandarinEditionEnabled;
+        this._mandarinKnownCharacters = currentSettings.mandarinKnownCharacters;
         this.learningController.settingsChanged({
             ...currentSettings,
             recipeName: activeRecipe(currentSettings)?.name ?? null,

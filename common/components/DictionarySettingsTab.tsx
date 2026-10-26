@@ -1,4 +1,5 @@
 import project from '@project/common/project';
+import { isMandarinEngineUrl } from '@project/common/mandarin/engine/engine-url';
 import { asbError } from '@project/common/util/log';
 import {
     computeStyles,
@@ -65,6 +66,7 @@ import {
     TokenState,
     tokenAnnotationStyleValues,
     dictionaryTrackEnabled,
+    defaultDictionaryTracks,
 } from '@project/common/settings';
 import type { Anki } from '@project/common/anki';
 import type { WaniKaniUser } from '@project/common/wanikani';
@@ -1619,36 +1621,69 @@ const DictionarySettingsTab: React.FC<Props> = ({
                         />
                     </Alert>
                 )}
-                <SettingsTextField
-                    label={t('settings.dictionaryYomitanUrl')}
-                    value={selectedDictionary.dictionaryYomitanUrl}
-                    error={Boolean(dictionaryYomitanUrlError)}
-                    helperText={getHelperTextForCacheSettingsDependencies(
-                        t('settings.dictionaryYomitanUrl'),
-                        'dictionaryYomitanUrl',
-                        dictionaryYomitanUrlError
-                    )}
-                    color="primary"
-                    onChange={(e) => {
-                        const newTracks = [...dictionaryTracks];
-                        newTracks[selectedDictionaryTrack] = {
-                            ...newTracks[selectedDictionaryTrack],
-                            dictionaryYomitanUrl: e.target.value,
-                        };
-                        void onSettingChanged('dictionaryTracks', newTracks);
-                    }}
-                    slotProps={{
-                        input: {
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton onClick={dictionaryRequestYomitan}>
-                                        <RefreshIcon />
-                                    </IconButton>
-                                </InputAdornment>
-                            ),
-                        },
-                    }}
-                />
+                {isMandarinEngineUrl(selectedDictionary.dictionaryYomitanUrl) ? (
+                    // Mandarin Edition: the engine's address carries a fingerprint of the known
+                    // characters, which means nothing to a learner, so name the engine instead.
+                    <SettingsTextField
+                        label={t('settings.dictionaryYomitanUrl')}
+                        value={t('mandarin.engineName')}
+                        helperText={t('mandarin.engineHelp')}
+                        slotProps={{
+                            input: {
+                                readOnly: true,
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <Button
+                                            size="small"
+                                            onClick={() => {
+                                                const newTracks = [...dictionaryTracks];
+                                                newTracks[selectedDictionaryTrack] = {
+                                                    ...newTracks[selectedDictionaryTrack],
+                                                    dictionaryYomitanUrl:
+                                                        defaultDictionaryTracks[0].dictionaryYomitanUrl,
+                                                };
+                                                void onSettingChanged('dictionaryTracks', newTracks);
+                                            }}
+                                        >
+                                            {t('mandarin.useYomitan')}
+                                        </Button>
+                                    </InputAdornment>
+                                ),
+                            },
+                        }}
+                    />
+                ) : (
+                    <SettingsTextField
+                        label={t('settings.dictionaryYomitanUrl')}
+                        value={selectedDictionary.dictionaryYomitanUrl}
+                        error={Boolean(dictionaryYomitanUrlError)}
+                        helperText={getHelperTextForCacheSettingsDependencies(
+                            t('settings.dictionaryYomitanUrl'),
+                            'dictionaryYomitanUrl',
+                            dictionaryYomitanUrlError
+                        )}
+                        color="primary"
+                        onChange={(e) => {
+                            const newTracks = [...dictionaryTracks];
+                            newTracks[selectedDictionaryTrack] = {
+                                ...newTracks[selectedDictionaryTrack],
+                                dictionaryYomitanUrl: e.target.value,
+                            };
+                            void onSettingChanged('dictionaryTracks', newTracks);
+                        }}
+                        slotProps={{
+                            input: {
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton onClick={dictionaryRequestYomitan}>
+                                            <RefreshIcon />
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            },
+                        }}
+                    />
+                )}
                 {dictionaryYomitanMecabError && <Alert severity="info">{dictionaryYomitanMecabError}</Alert>}
                 {supportsDictionaryYomitanMecab && (
                     <SettingsTextField

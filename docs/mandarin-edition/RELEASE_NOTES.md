@@ -1,5 +1,18 @@
 # Mandarin Edition — release notes
 
+## Performance, percent known, cleanup
+
+- **The engine stays loaded.**
+  - **Before:** the engine ran in the background worker, which Chrome stops after about 30 seconds idle, so every pause meant reloading the dictionary and segmenter.
+  - **Now (Chrome):** it lives in the extension's offscreen document, which stays open; the worker only forwards requests. After a worker restart, re-annotation takes about 100 ms (journey 10).
+  - **Firefox,** which has no offscreen documents, keeps the engine in the background as before.
+- **Smaller, lazier dictionary.** CC-CEDICT ships as packed text (8.8 MB, was 11.0 MB of JSON) with at most four glosses per entry, the most the meaning card shows. Only a headword index is built on load, and entries are parsed when looked up. Loading takes about 60 ms instead of about 175 ms, and memory is about 28 MB instead of about 80 MB.
+- **Smaller install.** The zip leaves out source maps (17.4 MB, was 21.0 MB); dev builds keep them.
+- **Percent known.** When subtitles load, a notice shows what share of the episode's characters you know, how many new characters it has, and its hardest stretch, for example "93% of characters known · 41 new · hardest 12:40–14:10 (78%)". Repeats count, because that's what you actually read; about 95% known is the comfortable zone for learning from input.
+- **Engine label.** Settings → Annotation shows "Built-in Chinese engine" instead of `local://mandarin/known-…`, with a **Use Yomitan** button to switch the track to your own Yomitan.
+- **One branch.** `main` now holds the Mandarin Edition; the stacked feature branches are gone.
+- Tests: 15 end-to-end journeys.
+
 ## Design polish: rough spots
 
 - **Meaning card.** Glosses are no longer squeezed into ruby and hyphen-wrapped ("conveni-/ent"). Hovering or selecting a word with a character you do not know yet shows a card with up to four senses, in the sense the sentence uses. Pinyin stays as ruby. Stock asbplayer's gloss rendering is unchanged.
@@ -54,6 +67,8 @@
 - **No word frequencies.** The engine does not supply frequency data, so frequency annotations stay empty.
 - **Known characters are per profile.** Like any setting, they live in the active settings profile.
 - **The meaning card shows up to four CC-CEDICT senses** of the reading the sentence uses. Rare senses beyond that are left out.
+- **Two videos at once can mix up a meaning.** The engine leads a word's meaning with the reading it most recently chose. With two tabs playing different videos, a word read differently in each can occasionally show the other tab's sense.
+- **The offscreen document stays open while the browser runs** (about 28 MB with the engine loaded), as it did for asbplayer's audio capture.
 - **Extension pages** (side panel, popup) reach the engine through a registered fetcher. A page that does not register one cannot annotate with the engine.
 - **Verified on a local test page only.** The journeys run against a local `<video>`. YouTube, Netflix and other sites need a manual spot check; site key handlers could still interact with G, H, R, [ and ].
 - **Upstream's adaptive word visibility and the honesty rule.** A line the renderer draws counts as shown even if adaptive visibility hid most of it, so G/H can be refused for it. Safe in the honest direction; refined when the Chinese engine lands.

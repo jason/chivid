@@ -26,7 +26,8 @@ Needs Playwright with Chromium and `python3`. `make-fixtures.sh` regenerates the
 | 6 | Export to tutor | Settings → Misc → Export learning ledger downloads JSONL; `tools/ledger_to_lesson.py` turns it into the "From last night" block |
 | 7 | On-video mode button | The active recipe's icon and label; the vertical menu is fully visible; choosing Just Watch saves it and shows the line; the edition toolbar is a blurred pill |
 | 8a | Chinese engine | Hovering 便宜 shows its meaning card and hovering 我 shows none; meanings are never hyphen-wrapped. Enabling seeds HSK 1–2 (598 characters) and points track 1 at the engine. A line of HSK 1–2 characters shows no pinyin. Editing the known set in Settings re-annotates the open video: pinyin appears over exactly 便宜银行 (pián yi, not biàn yí), 便宜 glosses "cheap", known-character words get no gloss. Adding through HSK 3 clears them again |
-| 9 | Edition look everywhere | Select Subtitles (opened from the side panel) renders in the edition surface. Shift+L's notice is a 15px pill. The side panel list underlines unknown characters with pinyin hidden at rest, and the current line has the accent bar |
+| 10 | Engine survives the idle worker | The engine runs in the offscreen document. After Chrome's background worker is stopped (confirmed restarted), editing the known set re-annotates in well under 1.5 s, with no dictionary reload |
+| 9 | Edition look everywhere | Loading subtitles shows "N% of characters known · M new", with N and M checked against the fixture. Select Subtitles (opened from the side panel) renders in the edition surface. Shift+L's notice is a 15px pill. The side panel list underlines unknown characters with pinyin hidden at rest, and the current line has the accent bar |
 | 8b | Edition look | Enable gives subtitles the pill, weight 500 and the CJK font; disable restores stock asbplayer's look |
 
 A mutation check was run when these were written: disabling the "revealed lines cannot be

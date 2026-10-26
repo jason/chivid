@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // Builds the Mandarin Edition engine assets into extension/public/mandarin/:
-//   cedict.json  CC-CEDICT packed as { simplified: [[traditional, pinyin, glosses], ...] }
-//   jieba_rs_wasm_bg.wasm  the jieba segmenter, loaded by the background service worker
+//   cedict.txt  CC-CEDICT packed one entry per line (format: packedTextSource in
+//               common/mandarin/engine/dictionary.ts), at most four glosses per entry
+//   jieba_rs_wasm_bg.wasm  the jieba segmenter, loaded with the engine in the offscreen document
 // CC-CEDICT is licensed CC BY-SA 4.0 (https://cc-cedict.org); attribution ships alongside.
 import { createRequire } from 'node:module';
-import { copyFileSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,9 +16,19 @@ mkdirSync(out, { recursive: true });
 
 const cedictPath = join(dirname(require.resolve('cedict-json')), 'cedict.json');
 const rows = JSON.parse(readFileSync(cedictPath, 'utf8'));
-const packed = {};
-for (const row of rows) (packed[row.simplified] ??= []).push([row.traditional, row.pinyin, row.english]);
-writeFileSync(join(out, 'cedict.json'), JSON.stringify(packed));
+// Mirrors packCedictText in common/mandarin/engine/dictionary.ts (dictionary.test.ts checks they agree).
+const maxGlossesPerEntry = 4;
+const groups = new Map();
+for (const row of rows) {
+    const traditional = row.traditional === row.simplified ? '' : row.traditional;
+    const glosses = row.english.slice(0, maxGlossesPerEntry).join('\u001f');
+    const line = `${row.simplified}\t${traditional}\t${row.pinyin}\t${glosses}`;
+    const group = groups.get(row.simplified);
+    if (group) group.push(line);
+    else groups.set(row.simplified, [line]);
+}
+writeFileSync(join(out, 'cedict.txt'), [...groups.values()].map((lines) => lines.join('\n')).join('\n'));
+rmSync(join(out, 'cedict.json'), { force: true });
 
 const extensionRequire = createRequire(join(root, 'extension', 'package.json'));
 const jiebaWeb = join(dirname(extensionRequire.resolve('jieba-wasm/web')), 'jieba_rs_wasm_bg.wasm');
@@ -33,5 +44,5 @@ writeFileSync(
 
 const mb = (file) => (statSync(join(out, file)).size / 1e6).toFixed(1);
 console.log(
-    `mandarin assets: ${Object.keys(packed).length} headwords, cedict.json ${mb('cedict.json')} MB, wasm ${mb('jieba_rs_wasm_bg.wasm')} MB`
+    `mandarin assets: ${groups.size} headwords, cedict.txt ${mb('cedict.txt')} MB, wasm ${mb('jieba_rs_wasm_bg.wasm')} MB`
 );

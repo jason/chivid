@@ -64,6 +64,8 @@ export default defineConfig({
         },
     }),
     zip: {
+        // Source maps stay in dev builds; the installable zip leaves them out (about 29 MB unpacked).
+        exclude: ['**/*.map'],
         sourcesRoot: '..',
         includeSources: ['patches/**'],
         sourcesTemplate: `${releaseInfo.sourcesTemplate}.zip`,
