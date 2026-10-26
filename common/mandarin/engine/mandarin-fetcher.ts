@@ -27,6 +27,17 @@ export interface MandarinEngineParts {
     readonly knownCharacters?: string;
 }
 
+/** Up to four senses, joined with "; ", trimmed to a card-sized length. */
+export const conciseSenses = (glosses: readonly string[]): string => {
+    let result = '';
+    for (const gloss of glosses.slice(0, 4)) {
+        const next = result ? `${result}; ${gloss}` : gloss;
+        if (result && next.length > 90) break;
+        result = next;
+    }
+    return result;
+};
+
 const exactSource = (term: string) => ({
     originalText: term,
     transformedText: term,
@@ -115,6 +126,9 @@ export class MandarinEngine {
             const glosses = entries
                 .filter((e) => e.pinyin.toLowerCase() === reading.toLowerCase())
                 .flatMap((e) => e.glosses);
+            // Upstream glosses from the first entry and shows its first sense on the word; leading
+            // with the senses joined keeps that short while the full entry is there for the card.
+            const joined = conciseSenses(glosses);
             return {
                 headwords: [headword(term, markReading(reading))],
                 frequencies: [],
@@ -132,7 +146,7 @@ export class MandarinEngine {
                         sequences: [],
                         isPrimary: true,
                         tags: [],
-                        entries: glosses,
+                        entries: joined ? [joined, ...glosses] : glosses,
                     },
                 ],
             };

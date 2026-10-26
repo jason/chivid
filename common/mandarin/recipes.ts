@@ -67,6 +67,13 @@ export const mandarinEngineTrack = (track: DictionaryTrack, knownCharacters?: st
                 reading: { ...config.video.reading, onHoverEnabled: true },
                 gloss: { ...config.video.gloss, onHoverEnabled: true },
             },
+            // In the subtitle list, readings stay in the resting text (styled as an underline under
+            // unknown characters, pinyin hidden) and come up with the meaning when the row is hovered.
+            subtitlePlayer: {
+                ...config.subtitlePlayer,
+                reading: { ...config.subtitlePlayer.reading, onHoverEnabled: false },
+                gloss: { ...config.subtitlePlayer.gloss, onHoverEnabled: true },
+            },
             onStatuses: config.onStatuses.map((options, status) => ({
                 ...options,
                 reading: status <= TokenStatus.LEARNING,

@@ -1,4 +1,5 @@
 import CssBaseline from '@mui/material/CssBaseline';
+import { useMandarinEdition } from '@/ui/hooks/use-mandarin-edition';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -82,7 +83,11 @@ export default function VideoDataSyncUi({ bridge }: Props) {
         setSubtitleTrackSelectorDisabled,
     } = useVideoDataSyncDialogState();
 
-    const theme = useMemo(() => createTheme((themeType || 'dark') as PaletteMode), [themeType]);
+    const mandarinEdition = useMandarinEdition();
+    const theme = useMemo(
+        () => createTheme((themeType || 'dark') as PaletteMode, mandarinEdition),
+        [themeType, mandarinEdition]
+    );
 
     const handleOpenSettings = useCallback(() => {
         bridge.sendMessageFromServer({ command: 'openSettings' });

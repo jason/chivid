@@ -16,4 +16,7 @@ Where it lands:
 
 - **MUI theme** (`createTheme(themeType, mandarinEdition)`): settings, side panel, popup, statistics and the on-video controls. No elevation, hairline borders on menus and popovers, and tooltips use the surface color.
 - **Subtitles** (`common/mandarin/subtitle-style.ts`): weight 500, no glow, black at 55% as a pill (radius 8px, padding .15em/.45em), the CJK font stack, and .02em tracking. These are written as settings, so the learner can change them. They are applied only over untouched upstream defaults and reverted only if still unchanged.
-- **Ruby and gloss** (`video.css`, gated by `body.asbplayer-mandarin`): pinyin in the Latin sans at weight 400 and 80% opacity with a legibility shadow. Glosses are hidden on words with no unknown character, and the gloss card uses surface, hairline and no shadow.
+- **Ruby and meaning card** (`video.css` and `subtitles.css`, gated by `body.asbplayer-mandarin`): pinyin in the Latin sans at weight 400 and 80% opacity with a legibility shadow. Meanings are a card (surface, hairline, no shadow) above a hovered or selected word that has an unknown character, never ruby.
+- **Notifications**: the toolbar's pill (overlay, blur, hairline), 15px at weight 500.
+- **Subtitle list**: an accent bar (inset 3px) and accent-soft wash on the current line. At rest, unknown characters get an amber underline and no pinyin; on hover, pinyin and the meaning card, anchored to the word's start.
+- **Frames on the video page** follow the page's edition class; extension pages read the setting (`useMandarinEdition`).

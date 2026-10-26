@@ -421,26 +421,36 @@ div.asbplayer-fullscreen-subtitles > span {
     letter-spacing: 0 !important;
     opacity: 0.8;
     padding-bottom: 0.15em;
-}
-
-/* Ruby sits over the video, outside the pill: a soft shadow keeps it legible on bright frames. */
-.asbplayer-mandarin .asb-reading rt,
-.asbplayer-mandarin .asb-gloss rt {
+    /* Ruby sits over the video, outside the pill: a soft shadow keeps it legible on bright frames. */
     text-shadow:
         0 0 3px rgba(0, 0, 0, 0.9),
         0 0 6px rgba(0, 0, 0, 0.6) !important;
 }
 
 /*
- * A gloss only where pinyin is shown, i.e. over words with a character the learner does not
- * know yet. Words made only of known characters stay clean even on hover.
+ * Mandarin Edition meanings: never squeezed into ruby over two-character words. Hovering (or
+ * selecting) a word that has a character the learner does not know yet shows its senses as a
+ * card above the line; words made only of known characters show nothing.
  */
-.asbplayer-mandarin ruby.asb-gloss:not(:has(.asb-reading)) > rt {
-    visibility: hidden;
+.asbplayer-mandarin ruby.asb-gloss > rt {
+    display: none !important;
 }
 
-/* Mandarin Edition: the hover gloss as a quiet card (surface, hairline, no shadow). */
+.asbplayer-mandarin .asb-gloss-word {
+    position: relative;
+}
+
+.asbplayer-mandarin .asb-gloss-word::after,
 .asbplayer-mandarin .asb-gloss-popup::after {
+    content: attr(data-asb-gloss);
+    display: none;
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    bottom: calc(100% + 1.4em);
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: min(24em, 80vw);
     padding: 8px 12px;
     border-radius: 10px;
     border: 1px solid rgba(236, 226, 214, 0.24);
@@ -455,6 +465,50 @@ div.asbplayer-fullscreen-subtitles > span {
         'Segoe UI',
         sans-serif;
     font-size: 14px !important;
+    font-style: normal;
+    font-weight: 400;
     line-height: 1.5;
     letter-spacing: 0;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+    text-align: left;
+    text-shadow: none !important;
+    white-space: normal !important;
+}
+
+.asbplayer-mandarin .asb-gloss-word:has(.asb-reading):hover::after,
+.asbplayer-mandarin .asb-token-selected .asb-gloss-word:has(.asb-reading)::after,
+.asbplayer-mandarin .asb-gloss-popup:has(.asb-reading):hover::after,
+.asbplayer-mandarin .asb-token-selected .asb-gloss-popup:has(.asb-reading)::after {
+    display: block;
+}
+
+.asbplayer-mandarin .asb-gloss-popup:not(:has(.asb-reading))::after {
+    display: none !important;
+}
+
+/* Mandarin Edition notifications ("Recipe: Ears", segment loop): the toolbar's quiet pill. */
+.asbplayer-mandarin .asbplayer-notification {
+    display: inline-block !important;
+    margin: 8px 0 !important;
+    padding: 6px 14px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(236, 226, 214, 0.12) !important;
+    background: rgba(22, 19, 15, 0.72) !important;
+    backdrop-filter: blur(14px);
+    color: #ece2d6 !important;
+    -webkit-text-fill-color: #ece2d6;
+    -webkit-text-stroke: 0 transparent !important;
+    text-shadow: none !important;
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        'PingFang SC',
+        sans-serif !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.01em !important;
+    line-height: 1.4 !important;
 }

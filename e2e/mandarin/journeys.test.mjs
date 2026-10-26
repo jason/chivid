@@ -365,13 +365,24 @@ const shownPinyin = (page) =>
         ])
     );
 
-/** Gloss text that would be visible for each glossed word, '' where the edition hides it. */
+/** Meaning card text for each glossed word on the line, '' where the edition never shows one. */
 const shownGlosses = (page) =>
     page.evaluate(() =>
-        [...document.querySelectorAll('.asbplayer-subtitles-container-bottom ruby.asb-gloss > rt')].map((rt) =>
-            getComputedStyle(rt).visibility === 'hidden' ? '' : rt.textContent
-        )
+        [
+            ...document.querySelectorAll(
+                '.asbplayer-subtitles-container-bottom .asbplayer-subtitle-rich :is(.asb-gloss-word, .asb-gloss-popup)'
+            ),
+        ].map((word) => (word.querySelector('.asb-reading') ? word.dataset.asbGloss : ''))
     );
+
+/** Whether the meaning card is showing over a word, as the learner would see it while hovering. */
+const cardShowing = (page, start) =>
+    page.evaluate((s) => {
+        const word = document.querySelector(
+            `.asbplayer-subtitles-container-bottom .asbplayer-subtitle-rich [data-asb-token-start="${s}"] :is(.asb-gloss-word, .asb-gloss-popup)`
+        );
+        return word ? getComputedStyle(word, '::after').display : 'missing';
+    }, start);
 
 describe('Journey 8: the built-in Chinese engine gives pinyin and meaning only where the learner needs it', () => {
     it('starts a new learner at HSK 1-2, re-annotates live when they edit their characters, and glosses in context', async () => {
@@ -416,7 +427,7 @@ describe('Journey 8: the built-in Chinese engine gives pinyin and meaning only w
             ]);
             // Meanings are looked up after the words are split, so they arrive a moment later.
             await page.waitForFunction(
-                () => document.querySelectorAll('.asbplayer-subtitles-container-bottom ruby.asb-gloss').length > 0,
+                () => document.querySelectorAll('.asbplayer-subtitles-container-bottom .asb-gloss-word').length > 0,
                 null,
                 { timeout: 15000 }
             );
@@ -424,6 +435,20 @@ describe('Journey 8: the built-in Chinese engine gives pinyin and meaning only w
             assert.ok(glosses.some((g) => /cheap/.test(g)), `便宜 is glossed as cheap, got ${glosses}`);
             assert.ok(glosses.some((g) => /bank/.test(g)));
             assert.ok(!glosses.some((g) => /^I$|^of$/.test(g)), 'words of known characters get no gloss');
+            assert.ok(glosses.every((g) => !/-$/.test(g)), 'meanings are never hyphen-wrapped');
+
+            // Hovering 便宜 (characters 5-6) shows its meaning card; hovering 我 shows nothing.
+            const richWord = (start) =>
+                page.locator(`.asbplayer-subtitles-container-bottom .asbplayer-subtitle-rich [data-asb-token-start="${start}"]`);
+            await page.locator('.asbplayer-subtitles-container-bottom .asbplayer-subtitle-text').hover({ force: true });
+            await richWord(5).hover();
+            await page.waitForTimeout(300);
+            assert.equal(await cardShowing(page, 5), 'block');
+            if (process.env.CHIVID_SHOT) await page.screenshot({ path: process.env.CHIVID_SHOT });
+            await richWord(0).hover();
+            await page.waitForTimeout(300);
+            assert.equal(await cardShowing(page, 0), 'none');
+
 
             // Adding everything through an HSK level takes them away again.
             await settingsPage.bringToFront();
@@ -484,6 +509,80 @@ describe('Journey 8: the built-in Chinese engine gives pinyin and meaning only w
             assert.equal(stock.background, 'rgba(0, 0, 0, 0)');
             assert.equal(stock.weight, '700');
             assert.doesNotMatch(stock.font, /Noto Sans SC/);
+        } finally {
+            await app.close();
+        }
+    });
+});
+
+describe('Journey 9: the edition look reaches the dialogs, notifications and subtitle list', () => {
+    it('opens the Select Subtitles dialog in the edition theme, shows recipe notices as a pill, and styles the list', async () => {
+        const app = await h.launch();
+        try {
+            await h.setSettings(
+                app.worker,
+                h.baseSettings({ ...withRecipe(null), keyBindSet: { cycleRecipesForward: { keys: 'shift+L' } } })
+            );
+            const settingsPage = await openMiscSettings(app);
+            await settingsPage.getByLabel('Enable Mandarin Edition').uncheck();
+            await settingsPage.getByLabel('Enable Mandarin Edition').check();
+            await settingsPage.getByTestId('mandarin-known-characters').fill('我觉得这个的不太好');
+            await settingsPage.getByTestId('mandarin-known-characters').blur();
+            await settingsPage.waitForTimeout(500);
+
+            const panel = await app.context.newPage();
+            await panel.goto(`chrome-extension://${app.extensionId}/sidepanel.html`);
+            const page = await h.openPlayer(app.context, server.url);
+            await page.bringToFront();
+            await panel.waitForTimeout(1500);
+
+            // Load Subtitles from the side panel opens the dialog on the video page.
+            await panel.getByRole('button', { name: /Load Subtitles/ }).click();
+            await page.waitForFunction(
+                () =>
+                    [...document.querySelectorAll('iframe')].some((f) =>
+                        f.contentDocument?.body?.innerText?.includes('Select Subtitles')
+                    ),
+                null,
+                { timeout: 10000 }
+            );
+            const dialogSurface = await page.evaluate(() => {
+                const frame = [...document.querySelectorAll('iframe')].find((f) =>
+                    f.contentDocument?.body?.innerText?.includes('Select Subtitles')
+                );
+                return getComputedStyle(frame.contentDocument.querySelector('.MuiDialog-paper')).backgroundColor;
+            });
+            assert.equal(dialogSurface, 'rgb(38, 33, 28)', 'dialog uses the edition surface');
+            await page.keyboard.press('Escape');
+
+            await h.dropSubtitles(page);
+            await h.seekTo(page, insideLine(3));
+            await h.press(page, 'Shift+L');
+            const pill = await page.evaluate(() => {
+                const note = document.querySelector('.asbplayer-notification');
+                const style = getComputedStyle(note);
+                return { text: note.textContent, radius: style.borderRadius, size: style.fontSize };
+            });
+            assert.match(pill.text, /Recipe: Just Watch/);
+            assert.equal(pill.radius, '999px');
+            assert.equal(pill.size, '15px');
+
+            // The side panel list: unknown characters underlined, current line with the accent bar.
+            await panel.waitForFunction(() => document.querySelectorAll('tr .asb-reading').length > 0, null, {
+                timeout: 15000,
+            });
+            const list = await panel.evaluate(() => {
+                const ruby = document.querySelector('tr .asbplayer-subtitle-text .asb-reading, tr .asb-reading');
+                const current = document.querySelector('tr.Mui-selected');
+                return {
+                    underline: getComputedStyle(ruby).textDecorationLine,
+                    pinyinAtRest: getComputedStyle(ruby.querySelector('rt')).display,
+                    bar: current ? getComputedStyle(current).boxShadow : 'none',
+                };
+            });
+            assert.equal(list.underline, 'underline');
+            assert.equal(list.pinyinAtRest, 'none');
+            assert.match(list.bar, /inset/);
         } finally {
             await app.close();
         }

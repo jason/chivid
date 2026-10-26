@@ -16,6 +16,8 @@ export const ASB_READING_CLASS = 'asb-reading';
 export const ASB_FREQUENCY_CLASS = 'asb-frequency';
 export const ASB_GLOSS_CLASS = 'asb-gloss';
 export const ASB_GLOSS_POPUP_CLASS = 'asb-gloss-popup';
+/** Wraps a glossed word that fits on one line; carries the full gloss for themes that show it as a card. */
+export const ASB_GLOSS_WORD_CLASS = 'asb-gloss-word';
 export const ASB_GLOSS_TEXT_CLASS = 'asb-gloss-text';
 export const ASB_GLOSS_UNDER_CLASS = 'asb-gloss-under';
 export const ASB_PITCH_ACCENT_CLASS = 'asb-pitch-accent';

@@ -184,3 +184,69 @@
 .asbplayer-fullscreen-subtitles[aria-hidden='true'] .asb-token-adaptive-hidden {
     visibility: hidden;
 }
+
+/*
+ * Mandarin Edition subtitle list: at rest, characters the learner does not know yet are
+ * underlined in amber with no pinyin; hovering the line brings up pinyin and the meaning card.
+ */
+.asbplayer-mandarin .asb-subtitles .asb-reading {
+    text-decoration: underline;
+    text-decoration-color: var(--asb-mandarin-unknown, #e0a85c);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 0.18em;
+}
+
+.asbplayer-mandarin .asb-subtitles .asb-reading rt {
+    display: none !important;
+}
+
+.asbplayer-mandarin .asb-subtitles .asbplayer-subtitle-rich .asb-reading {
+    text-decoration: none;
+}
+
+.asbplayer-mandarin .asb-subtitles .asbplayer-subtitle-rich .asb-reading rt {
+    display: revert !important;
+}
+
+.asbplayer-mandarin .asb-subtitles .asb-reading rt {
+    font-weight: 400;
+    opacity: 0.75;
+}
+
+.asbplayer-mandarin .asb-subtitles ruby.asb-gloss > rt {
+    display: none !important;
+}
+
+.asbplayer-mandarin .asb-subtitles .asb-gloss-word,
+.asbplayer-mandarin .asb-subtitles .asb-gloss-popup {
+    position: relative;
+}
+
+.asbplayer-mandarin .asb-subtitles .asb-gloss-word::after,
+.asbplayer-mandarin .asb-subtitles .asb-gloss-popup::after {
+    content: attr(data-asb-gloss);
+    display: none;
+    position: absolute;
+    z-index: 2;
+    bottom: calc(100% + 0.9em);
+    /* Anchored to the word's start: the list sits against the panel edge, so centring would clip. */
+    left: 0;
+    width: max-content;
+    max-width: min(18em, 60vw);
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--asb-mandarin-line-strong, rgba(236, 226, 214, 0.24));
+    background: var(--asb-mandarin-surface, #26211c);
+    color: var(--asb-mandarin-fg, #ece2d6);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: left;
+    white-space: normal;
+    pointer-events: none;
+}
+
+.asbplayer-mandarin .asb-subtitles .asb-gloss-word:has(.asb-reading):hover::after,
+.asbplayer-mandarin .asb-subtitles .asb-gloss-popup:has(.asb-reading):hover::after {
+    display: block;
+}

@@ -1,3 +1,4 @@
+import { isMandarinEngineUrl } from '@project/common/mandarin/engine/engine-url';
 import type { Token, Tokenization, TokenReading } from '@project/common';
 import { subtitleWordVisibility } from '@project/common/playback/plan/playback-dictionary';
 import type { DictionaryTrack, EnabledAnnotations, TokenAnnotationConfigTarget } from '@project/common/settings';
@@ -28,6 +29,7 @@ import {
     ASB_FREQUENCY_CLASS,
     ASB_GLOSS_CLASS,
     ASB_GLOSS_POPUP_CLASS,
+    ASB_GLOSS_WORD_CLASS,
     ASB_GLOSS_TEXT_CLASS,
     ASB_GLOSS_UNDER_CLASS,
     ASB_PITCH_ACCENT_CLASS,
@@ -556,8 +558,12 @@ const applyGlossAnnotation = (
         annotatedToken = `<ruby class="${className}"><ruby class="${className}">${tokenText}<rt>${annotationText(innerLine)}</rt></ruby><rt>${annotationText(outerLine)}</rt></ruby>`;
     }
 
-    if (!truncated) return annotatedToken;
     const fullGloss = escapeHtmlAttribute(token.gloss.replace(/\s+/gu, ' ').trim());
+    if (!truncated) {
+        // Mandarin engine tracks carry every word's full gloss, which the edition shows as a card.
+        if (!isMandarinEngineUrl(ss.dt.dictionaryYomitanUrl)) return annotatedToken;
+        return `<span class="${ASB_GLOSS_WORD_CLASS}" data-asb-gloss="${fullGloss}">${annotatedToken}</span>`;
+    }
     return `<span class="${ASB_GLOSS_POPUP_CLASS}" data-asb-gloss="${fullGloss}">${annotatedToken}</span>`;
 };
 

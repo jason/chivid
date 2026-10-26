@@ -1,7 +1,12 @@
 /** @jest-environment node */
 import { describe, expect, it } from '@jest/globals';
 import { pinyinProContext } from '@project/common/mandarin/engine/context-pinyin';
-import { MandarinEngine, MandarinFetcher, mandarinEngineUrl } from '@project/common/mandarin/engine/mandarin-fetcher';
+import {
+    conciseSenses,
+    MandarinEngine,
+    MandarinFetcher,
+    mandarinEngineUrl,
+} from '@project/common/mandarin/engine/mandarin-fetcher';
 import { nodeSegmenter, testDictionary } from '@project/common/mandarin/engine/test-support';
 import { defaultDictionaryTracks } from '@project/common/settings';
 import { Yomitan } from '@project/common/yomitan';
@@ -106,5 +111,14 @@ describe('MandarinFetcher through upstream Yomitan client', () => {
         const client = yomitan();
         await client.version();
         await expect(client.gloss('hello')).resolves.toBeNull();
+    });
+
+    it('joins up to four senses for the meaning card, keeping it card-sized', () => {
+        expect(conciseSenses(['cheap', 'inexpensive'])).toBe('cheap; inexpensive');
+        expect(conciseSenses(['a', 'b', 'c', 'd', 'e'])).toBe('a; b; c; d');
+        const long = 'x'.repeat(80);
+        expect(conciseSenses(['first sense', long])).toBe('first sense');
+        expect(conciseSenses([long + long])).toBe(long + long);
+        expect(conciseSenses([])).toBe('');
     });
 });

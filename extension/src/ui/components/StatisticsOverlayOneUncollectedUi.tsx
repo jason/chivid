@@ -1,4 +1,5 @@
 import project from '@project/common/project';
+import { useMandarinEdition } from '@/ui/hooks/use-mandarin-edition';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyledEngineProvider, ThemeProvider } from '@mui/material/styles';
 import type { PaletteMode } from '@mui/material/styles';
@@ -38,7 +39,8 @@ const StatisticsOverlayOneUncollectedUi: React.FC<Props> = ({ bridge }) => {
     const [language, setLanguage] = useState<string>(project.defaultLanguage);
     const [dictionaryTracks, setDictionaryTracks] = useState<DictionaryTrack[]>([]);
 
-    const theme = useMemo(() => createTheme(themeType), [themeType]);
+    const mandarinEdition = useMandarinEdition();
+    const theme = useMemo(() => createTheme(themeType, mandarinEdition), [themeType, mandarinEdition]);
     useEffect(() => {
         bridge.addClientMessageListener((message: Message) => {
             if (message.command !== 'updateState') {

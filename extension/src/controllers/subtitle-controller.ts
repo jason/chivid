@@ -909,7 +909,16 @@ export default class SubtitleController {
         }
 
         const notificationText = text ?? i18n.t(locKey!, replacements ?? {});
-        this.notificationElementOverlay.setHtml([{ html: () => this._buildTextHtml(notificationText) }]);
+        this.notificationElementOverlay.setHtml([
+            {
+                // The Mandarin Edition shows notifications as a small pill of their own, not in the
+                // subtitle's look (whose inline styles would override the pill).
+                html: () =>
+                    document.body.classList.contains('asbplayer-mandarin')
+                        ? `<span>${notificationText}</span>`
+                        : this._buildTextHtml(notificationText),
+            },
+        ]);
 
         if (this.notificationElementOverlayHideTimeout) {
             clearTimeout(this.notificationElementOverlayHideTimeout);

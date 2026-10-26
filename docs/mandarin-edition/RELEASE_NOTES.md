@@ -1,5 +1,17 @@
 # Mandarin Edition — release notes
 
+## Design polish: rough spots
+
+- **Meaning card.** Glosses are no longer squeezed into ruby and hyphen-wrapped ("conveni-/ent"). Hovering or selecting a word with a character you do not know yet shows a card with up to four senses, in the sense the sentence uses. Pinyin stays as ruby. Stock asbplayer's gloss rendering is unchanged.
+- **Notifications** ("Recipe: Ears", segment loop messages) are a small pill matching the toolbar, not text in the subtitle's look.
+- **Side panel subtitle list.**
+  - The current line has an accent bar and a soft wash.
+  - At rest, characters you don't know yet are underlined in amber, with no pinyin.
+  - Hovering a line shows the pinyin and the meaning card, anchored so it is never clipped.
+- **Dialogs** on the video page (Select Subtitles, video select, first-run) and the notification and statistics frames now use the edition theme, and info banners are restyled. Also fixed a crash found on the way: an early version of this change blanked the Select Subtitles dialog. Journey 9 now guards it.
+- **Light theme** was checked in settings, side panel and dialogs.
+- Tests: 14 end-to-end journeys.
+
 ## Slice B: the Chinese engine, known characters, design pass
 
 - **Built-in Chinese engine** that answers asbplayer's own Yomitan client, so every upstream annotation feature works for Chinese with nothing else installed. It uses jieba (WebAssembly, dictionary mode) for segmentation, CC-CEDICT for readings and meanings, and pinyin-pro for sentence context. It runs in the extension's background worker.
@@ -41,7 +53,7 @@
 - **Engine accuracy is measured, not perfect.** The reference set has not been checked by a human yet (`humanVerified: false`), so the 35/35 score is against Claude-written answers. On held-out lines, 2 of 20 still differ.
 - **No word frequencies.** The engine does not supply frequency data, so frequency annotations stay empty.
 - **Known characters are per profile.** Like any setting, they live in the active settings profile.
-- **Meaning on hover is the first CC-CEDICT sense, cut to fit the word's width** (upstream's gloss renderer). Long senses wrap or are truncated.
+- **The meaning card shows up to four CC-CEDICT senses** of the reading the sentence uses. Rare senses beyond that are left out.
 - **Extension pages** (side panel, popup) reach the engine through a registered fetcher. A page that does not register one cannot annotate with the engine.
 - **Verified on a local test page only.** The journeys run against a local `<video>`. YouTube, Netflix and other sites need a manual spot check; site key handlers could still interact with G, H, R, [ and ].
 - **Upstream's adaptive word visibility and the honesty rule.** A line the renderer draws counts as shown even if adaptive visibility hid most of it, so G/H can be refused for it. Safe in the honest direction; refined when the Chinese engine lands.

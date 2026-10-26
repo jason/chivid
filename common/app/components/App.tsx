@@ -29,7 +29,7 @@ import type {
     ConfirmedVideoDataSubtitleTrack,
 } from '@project/common';
 import { MediaFragment, PostMineAction, MediaFragmentErrorCode, VideoDataUiOpenReason } from '@project/common';
-import { createTheme } from '@project/common/theme';
+import { applyMandarinPageStyle, createTheme } from '@project/common/theme';
 import type { AsbplayerSettings, DictionaryTrack, Profile, SettingsProvider } from '@project/common/settings';
 import { AudioClip, Mp3Encoder } from '@project/common/audio-clip';
 import type { ExportParams } from '@project/common/anki';
@@ -391,6 +391,10 @@ function App({
     const theme = useMemo<Theme>(
         () => createTheme(settings.themeType, settings.mandarinEditionEnabled),
         [settings.themeType, settings.mandarinEditionEnabled]
+    );
+    useEffect(
+        () => applyMandarinPageStyle(settings.mandarinEditionEnabled, settings.themeType),
+        [settings.mandarinEditionEnabled, settings.themeType]
     );
     const anki = useAnki({ settings, fetcher });
     const searchParams = useMemo(() => new URLSearchParams(location.search), []);

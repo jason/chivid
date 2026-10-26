@@ -104,8 +104,50 @@ const mandarinTheme = (themeType: PaletteMode) => {
                 },
             },
             MuiDivider: { styleOverrides: { root: { borderColor: t.line } } },
+            // The subtitle list's current line: accent bar and a soft accent wash.
+            MuiTableRow: {
+                styleOverrides: {
+                    root: {
+                        '&.Mui-selected, &.Mui-selected:hover': {
+                            backgroundColor: t.accentSoft,
+                            boxShadow: `inset 3px 0 0 ${t.accent}`,
+                        },
+                    },
+                },
+            },
+            MuiTableCell: { styleOverrides: { root: { borderBottomColor: t.line } } },
+            MuiAlert: {
+                styleOverrides: {
+                    standardInfo: {
+                        backgroundColor: t.bg2,
+                        color: t.fg2,
+                        border: `1px solid ${t.line}`,
+                        '& .MuiAlert-icon': { color: t.fg3 },
+                    },
+                },
+            },
         },
     });
+};
+
+/**
+ * Marks a page as Mandarin Edition (for the stylesheet rules gated on `.asbplayer-mandarin`) and
+ * exposes the tokens the stylesheets use as CSS variables.
+ */
+export const applyMandarinPageStyle = (enabled: boolean, themeType: PaletteMode) => {
+    const body = document.body;
+    body.classList.toggle('asbplayer-mandarin', enabled);
+    const t = mandarinTokens[themeType];
+    const vars: Record<string, string> = {
+        '--asb-mandarin-surface': t.surface,
+        '--asb-mandarin-fg': t.fg,
+        '--asb-mandarin-line-strong': t.lineStrong,
+        '--asb-mandarin-unknown': themeType === 'dark' ? '#e0a85c' : '#a9711f',
+    };
+    for (const [name, value] of Object.entries(vars)) {
+        if (enabled) body.style.setProperty(name, value);
+        else body.style.removeProperty(name);
+    }
 };
 
 /** Upstream's theme, or the Mandarin Edition's when the edition is on. */

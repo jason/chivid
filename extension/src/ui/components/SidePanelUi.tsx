@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import SidePanel from '@project/extension/src/ui/components/SidePanel';
-import { createTheme } from '@project/common/theme';
+import { applyMandarinPageStyle, createTheme } from '@project/common/theme';
 import { asbError } from '@project/common/util/log';
 import type { AsbplayerSettings } from '@project/common/settings';
 import { SettingsProvider } from '@project/common/settings';
@@ -21,6 +21,9 @@ const settingsProvider = new SettingsProvider(new ExtensionSettingsStorage());
 const SidePanelUi = () => {
     const [settings, setSettings] = useState<AsbplayerSettings>();
     const extension = useChromeExtension({ component: 'sidePanel' });
+    useEffect(() => {
+        if (settings) applyMandarinPageStyle(settings.mandarinEditionEnabled, settings.themeType);
+    }, [settings]);
     const theme = useMemo(
         () => settings && createTheme(settings.themeType, settings.mandarinEditionEnabled),
         [settings]

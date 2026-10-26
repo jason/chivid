@@ -1,4 +1,5 @@
 import project from '@project/common/project';
+import { useMandarinEdition } from '@/ui/hooks/use-mandarin-edition';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -96,7 +97,8 @@ const NotificationUi = ({ bridge }: Props) => {
     useEffect(() => bridge.serverIsReady(), [bridge]);
 
     const [themeType, setThemeType] = useState<PaletteMode>('dark');
-    const theme = useMemo(() => createTheme(themeType), [themeType]);
+    const mandarinEdition = useMandarinEdition();
+    const theme = useMemo(() => createTheme(themeType, mandarinEdition), [themeType, mandarinEdition]);
 
     return (
         <ThemeProvider theme={theme}>

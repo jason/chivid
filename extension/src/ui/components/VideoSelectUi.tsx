@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMandarinEdition } from '@/ui/hooks/use-mandarin-edition';
 import { useTranslation } from 'react-i18next';
 import CssBaseline from '@mui/material/CssBaseline';
 import CloseIcon from '@mui/icons-material/Close';
@@ -43,7 +44,8 @@ export default function VideoSelectUi({ bridge }: Props) {
     const [openedFromMiningCommand, setOpenedFromMiningCommand] = useState<boolean>(false);
     const { t } = useTranslation();
 
-    const theme = useMemo(() => createTheme(themeType as PaletteMode), [themeType]);
+    const mandarinEdition = useMandarinEdition();
+    const theme = useMemo(() => createTheme(themeType as PaletteMode, mandarinEdition), [themeType, mandarinEdition]);
 
     useEffect(() => {
         return bridge.addClientMessageListener((message: Message) => {

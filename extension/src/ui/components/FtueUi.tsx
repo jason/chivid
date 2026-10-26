@@ -1,4 +1,5 @@
 import project from '@project/common/project';
+import { useMandarinEdition } from '@/ui/hooks/use-mandarin-edition';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { Trans, useTranslation } from 'react-i18next';
@@ -74,7 +75,8 @@ const useLangParam = () => {
 
 const FtueUi = () => {
     const [themeType, setThemeType] = useState<PaletteMode>('dark');
-    const theme = createTheme(themeType);
+    const mandarinEdition = useMandarinEdition();
+    const theme = createTheme(themeType, mandarinEdition);
     const langParam = useLangParam();
     const { initialized: i18Initialized } = useI18n({ language: langParam ?? browser.i18n.getUILanguage() });
     const classes = useStyles();
