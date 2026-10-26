@@ -5,8 +5,9 @@ Usage:
     python3 tools/ledger_to_lesson.py mandarin-ledger.jsonl [--since 2026-10-24] [--hours 24]
 
 Reads the JSONL exported from Settings -> Mandarin Edition -> Export learning ledger and
-prints Markdown: every line marked Missed while its text was hidden, latest mark per line
-wins, grouped by video, with a timestamp you can jump to.
+prints Markdown: the words looked up (meaning card opened), most looked-up first, with the
+sentence they appeared in; then every line marked Missed while its text was hidden, latest
+mark per line wins, grouped by video, with a timestamp you can jump to.
 """
 
 import argparse
@@ -44,15 +45,47 @@ def latest_audio_marks(events, since):
     return list(marks.values())
 
 
+def lookups_since(events, since):
+    """Words looked up since `since`, ignoring anything before the last reset.
+
+    Returns a list of (word, reading, gloss, count, example sentence), most looked-up first,
+    then alphabetically by reading so the order is stable.
+    """
+    words = {}
+    for event in events:
+        if event.get("kind") == "reset":
+            words.clear()
+            continue
+        if event.get("kind") != "lookup" or parse_ts(event["ts"]) < since:
+            continue
+        entry = words.setdefault(event["word"], {"reading": event["reading"], "gloss": event["gloss"], "count": 0, "sentence": event["sentence"]})
+        entry["count"] += 1
+    return sorted(
+        ((w, e["reading"], e["gloss"], e["count"], e["sentence"]) for w, e in words.items()),
+        key=lambda item: (-item[3], item[1]),
+    )
+
+
 def clock(ms):
     seconds = int(ms // 1000)
     return f"{seconds // 60}:{seconds % 60:02d}"
 
 
-def render(missed, got_count):
+def render(missed, got_count, lookups=()):
+    out = ["## From last night", ""]
+    if lookups:
+        out.append(f"### Words I looked up ({len(lookups)})")
+        out.append("")
+        for word, reading, gloss, count, sentence in lookups:
+            times = f" ×{count}" if count > 1 else ""
+            short_gloss = gloss.split(";")[0].strip()
+            out.append(f"- **{word}** {reading} — {short_gloss}{times}  \n  {sentence.strip()}")
+        out.append("")
     if not missed:
-        return f"## From last night\n\nNo missed lines. {got_count} lines understood without text.\n"
-    out = ["## From last night", "", f"{len(missed)} missed, {got_count} understood without text.", ""]
+        out.append(f"No missed lines. {got_count} lines understood without text.")
+        return "\n".join(out) + "\n"
+    out.append(f"{len(missed)} missed, {got_count} understood without text.")
+    out.append("")
     by_video = {}
     for event in missed:
         by_video.setdefault((event["title"] or event["sourceUrl"], event["sourceUrl"]), []).append(event)
@@ -79,10 +112,11 @@ def main(argv=None):
     else:
         since = datetime.now(timezone.utc) - timedelta(hours=args.hours)
 
-    marks = latest_audio_marks(read_events(args.ledger), since)
+    events = list(read_events(args.ledger))
+    marks = latest_audio_marks(events, since)
     missed = [e for e in marks if e["result"] == "missed"]
     got_count = sum(1 for e in marks if e["result"] == "got")
-    sys.stdout.write(render(missed, got_count))
+    sys.stdout.write(render(missed, got_count, lookups_since(events, since)))
 
 
 if __name__ == "__main__":

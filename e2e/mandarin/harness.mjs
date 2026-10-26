@@ -12,7 +12,8 @@ const { chromium } = createRequire(import.meta.url)('playwright');
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 export const fixturesDir = join(here, 'fixtures');
-export const extensionDir = process.env.CHIVID_EXTENSION_DIR ?? join(here, '..', '..', 'extension', '.output', 'chrome-mv3');
+export const extensionDir =
+    process.env.CHIVID_EXTENSION_DIR ?? join(here, '..', '..', 'extension', '.output', 'chrome-mv3');
 
 export const lines = [
     { start: 1000, end: 3000, text: '你今天怎么这么早？' },
@@ -62,7 +63,15 @@ export const launch = async () => {
         headless: false,
         acceptDownloads: true,
         viewport: { width: 1280, height: 800 },
-        args: ['--headless=new', `--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`],
+        permissions: ['microphone'],
+        args: [
+            '--headless=new',
+            `--disable-extensions-except=${extensionDir}`,
+            `--load-extension=${extensionDir}`,
+            // A fake microphone (a tone) so Shadow can record without a device or a permission prompt.
+            '--use-fake-device-for-media-stream',
+            '--use-fake-ui-for-media-stream',
+        ],
     });
     let [worker] = context.serviceWorkers();
     worker ??= await context.waitForEvent('serviceworker', { timeout: 20000 });
@@ -85,6 +94,14 @@ export const launch = async () => {
 
 /** Writes settings straight into the extension's storage, as the settings page would. */
 export const setSettings = (worker, settings) => worker.evaluate((s) => chrome.storage.local.set(s), settings);
+
+/** Changes settings while a video is open, the way the settings page does: write, then tell open videos. */
+export const updateSettings = async (worker, settings) => {
+    await setSettings(worker, settings);
+    await worker.evaluate(() =>
+        chrome.runtime.sendMessage({ sender: 'asbplayerv2', message: { command: 'settings-updated' } })
+    );
+};
 
 export const getSettings = (worker, keys) => worker.evaluate((k) => chrome.storage.local.get(k), keys);
 

@@ -62,7 +62,8 @@ describe('LearningModeButton', () => {
         [0, 'justWatch', 'Mode: Just Watch · shift+L next'],
         [1, 'ears', 'Mode: Ears · shift+L next'],
         [2, 'listenFirst', 'Mode: Listen First · shift+L next'],
-        [3, 'custom', 'Mode: Dialogue focus · shift+L next'],
+        [3, 'shadow', 'Mode: Shadow · shift+L next'],
+        [4, 'custom', 'Mode: Dialogue focus · shift+L next'],
     ])('shows recipe %p with its own icon and names it for screen readers', async (active, icon, label) => {
         const { button } = await render(active);
         expect(button.dataset.learningMode).toBe(icon);
@@ -79,6 +80,7 @@ describe('LearningModeButton', () => {
             'Just Watch',
             'Ears',
             'Listen First',
+            'Shadow',
             'Dialogue focus',
         ]);
         expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual([
@@ -87,12 +89,13 @@ describe('LearningModeButton', () => {
             'true',
             'false',
             'false',
+            'false',
         ]);
-        expect(onMenuOpenChange).toHaveBeenLastCalledWith(true, 5);
+        expect(onMenuOpenChange).toHaveBeenLastCalledWith(true, 6);
 
         await act(async () => (items[3] as HTMLElement).click());
         expect(onRecipeSelected).toHaveBeenCalledWith(2);
-        expect(onMenuOpenChange).toHaveBeenLastCalledWith(false, 5);
+        expect(onMenuOpenChange).toHaveBeenLastCalledWith(false, 6);
     });
 
     it('turns recipes off from the menu and ignores choosing the active one', async () => {

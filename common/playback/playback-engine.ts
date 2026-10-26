@@ -1103,6 +1103,7 @@ export default class PlaybackEngine<T extends IndexedSubtitleModel> {
             autoPauseMinimumDurationMs: this.settings.autoPauseMinimumDurationMs,
             autoPauseMaximumDurationMs: this.settings.autoPauseMaximumDurationMs,
             autoPauseTimePerCharacterMs: this.settings.autoPauseTimePerCharacterMs,
+            autoPauseDurationFactor: this.settings.autoPauseDurationFactor,
             subtitleVisibility: this.settings.subtitleVisibility,
             dictionaryTracks: this.settings.dictionaryTracks,
         });

@@ -30,6 +30,7 @@ const labels: Record<string, string> = {
     autoPauseMinimumDurationMs: 'settings.autoPauseMinimumDuration',
     autoPauseMaximumDurationMs: 'settings.autoPauseMaximumDuration',
     autoPauseTimePerCharacterMs: 'settings.autoPauseTimePerCharacter',
+    autoPauseDurationFactor: 'settings.autoPauseDurationFactor',
     autoPauseResumeDelayMs: 'settings.autoPauseResumeDelay',
     fastForward: 'settings.dictionaryPlaybackFastForward',
     autoPause: 'settings.dictionaryPlaybackAutoPause',

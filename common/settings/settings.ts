@@ -37,6 +37,8 @@ export enum AutoPauseResumeMode {
     manual = 'manual',
     fixed = 'fixed',
     subtitleLength = 'subtitleLength',
+    /** Mandarin Edition: pause for the line's spoken duration times a factor (shadowing). */
+    subtitleDuration = 'subtitleDuration',
 }
 
 export enum SubtitleVisibility {
@@ -101,6 +103,8 @@ export interface MiscSettings {
     readonly autoPauseMinimumDurationMs: number;
     readonly autoPauseMaximumDurationMs: number;
     readonly autoPauseTimePerCharacterMs: number;
+    /** With subtitleDuration resume: the pause as a multiple of how long the line was spoken. */
+    readonly autoPauseDurationFactor: number;
     readonly subtitleVisibility: SubtitleVisibility;
     readonly subtitleTriggerStartOffset: number;
     readonly subtitleTriggerEndOffset: number;
@@ -515,6 +519,8 @@ export interface KeyBindSet {
     readonly revealLine: KeyBind;
     readonly segmentStart: KeyBind;
     readonly segmentEnd: KeyBind;
+    /** Mandarin Edition, Shadow: play the speaker's line, then the learner's recording of it. */
+    readonly shadowCompare: KeyBind;
     readonly moveBottomSubtitlesUp: KeyBind;
     readonly moveBottomSubtitlesDown: KeyBind;
     readonly moveTopSubtitlesUp: KeyBind;

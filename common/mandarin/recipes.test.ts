@@ -22,19 +22,34 @@ describe('Mandarin recipes', () => {
         }
     });
 
-    it('turn auto-pause on only in Listen First', () => {
+    it('turn auto-pause on only in Listen First and Shadow', () => {
         expect(mandarinRecipes.map((r) => [r.id, r.playbackModes])).toEqual([
             ['justWatch', [1]],
             ['ears', [1]],
             ['listenFirst', [3]],
+            ['shadow', [3]],
         ]);
+    });
+
+    it('Shadow shows the text and pauses for 1.3 times the spoken line', () => {
+        const shadow = mandarinRecipes.find((r) => r.id === 'shadow')!;
+        expect(shadow.settings.hideUntilRevealed).toBe(false);
+        expect(shadow.settings.autoPauseResumeMode).toBe('subtitleDuration');
+        expect(shadow.settings.autoPauseDurationFactor).toBe(1.3);
+        expect(normalizeRecipe(shadow)?.settings.autoPauseDurationFactor).toBe(1.3);
     });
 
     it('are added after the learner own recipes when the edition is enabled, with Shift+L bound', () => {
         const own = { name: 'Dialogue focus', playbackModes: [2], settings: {} };
         const changes = settingsForEnablingMandarin({ ...defaultSettings, recipes: [own] });
         expect(changes.mandarinEditionEnabled).toBe(true);
-        expect(changes.recipes?.map((r) => r.name)).toEqual(['Dialogue focus', 'Just Watch', 'Ears', 'Listen First']);
+        expect(changes.recipes?.map((r) => r.name)).toEqual([
+            'Dialogue focus',
+            'Just Watch',
+            'Ears',
+            'Listen First',
+            'Shadow',
+        ]);
         expect(changes.keyBindSet?.cycleRecipesForward.keys).toBe('shift+L');
         expect(changes).not.toHaveProperty('activeRecipeId');
     });
@@ -46,7 +61,7 @@ describe('Mandarin recipes', () => {
             keyBindSet: { ...defaultSettings.keyBindSet, cycleRecipesForward: { keys: 'ctrl+R' } },
         };
         const changes = settingsForEnablingMandarin(settings);
-        expect(changes.recipes?.map((r) => r.name)).toEqual(['Ears', 'Just Watch', 'Listen First']);
+        expect(changes.recipes?.map((r) => r.name)).toEqual(['Ears', 'Just Watch', 'Listen First', 'Shadow']);
         expect(changes.recipes?.[0].settings.hideUntilRevealed).toBe(false);
         expect(changes).not.toHaveProperty('keyBindSet');
     });

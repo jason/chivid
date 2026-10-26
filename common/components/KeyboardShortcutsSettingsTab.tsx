@@ -87,6 +87,7 @@ const keyBindSectionByName: { [key in KeyBindName]: KeyboardShortcutSection } = 
     revealLine: 'playback',
     segmentStart: 'playback',
     segmentEnd: 'playback',
+    shadowCompare: 'playback',
     seekBackward: 'seek',
     seekForward: 'seek',
     seekToPreviousSubtitle: 'seek',
@@ -462,6 +463,11 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
             },
             segmentEnd: {
                 label: t('binds.segmentEnd'),
+                boundViaBrowser: false,
+                hide: !extensionInstalled,
+            },
+            shadowCompare: {
+                label: t('binds.shadowCompare'),
                 boundViaBrowser: false,
                 hide: !extensionInstalled,
             },

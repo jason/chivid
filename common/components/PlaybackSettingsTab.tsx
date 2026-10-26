@@ -93,6 +93,7 @@ const PlaybackSettingsFields: React.FC<Props> = ({
         autoPauseMinimumDurationMs,
         autoPauseMaximumDurationMs,
         autoPauseTimePerCharacterMs,
+        autoPauseDurationFactor,
         subtitleVisibility,
         streamingCondensedPlaybackMinimumSkipIntervalMs,
         dictionaryTracks,
@@ -375,6 +376,23 @@ const PlaybackSettingsFields: React.FC<Props> = ({
                                     }
                                     label={t('settings.autoPauseResumeModeSubtitleLength')}
                                 />
+                                <LabelWithHoverEffect
+                                    control={
+                                        <Radio
+                                            disabled={readOnly}
+                                            checked={autoPauseResumeMode === AutoPauseResumeMode.subtitleDuration}
+                                            value={AutoPauseResumeMode.subtitleDuration}
+                                            onChange={(event) =>
+                                                event.target.checked &&
+                                                void onSettingChanged(
+                                                    'autoPauseResumeMode',
+                                                    AutoPauseResumeMode.subtitleDuration
+                                                )
+                                            }
+                                        />
+                                    }
+                                    label={t('settings.autoPauseResumeModeSubtitleDuration')}
+                                />
                             </RadioGroup>
                         </FormControl>
                         {autoPauseResumeMode === AutoPauseResumeMode.fixed && (
@@ -389,6 +407,35 @@ const PlaybackSettingsFields: React.FC<Props> = ({
                                     slotProps={{
                                         htmlInput: { min: 0, step: 1 },
                                         input: { endAdornment: <InputAdornment position="end">ms</InputAdornment> },
+                                    }}
+                                />
+                                <NumericSettingInput
+                                    disabled={readOnly}
+                                    color="primary"
+                                    fullWidth
+                                    label={t('settings.autoPauseResumeDelay')}
+                                    value={autoPauseResumeDelayMs}
+                                    onValueChange={(value) => void onSettingChanged('autoPauseResumeDelayMs', value)}
+                                    slotProps={{
+                                        htmlInput: { min: 0, step: 1 },
+                                        input: { endAdornment: <InputAdornment position="end">ms</InputAdornment> },
+                                    }}
+                                />
+                            </ResponsiveSettingsStack>
+                        )}
+                        {autoPauseResumeMode === AutoPauseResumeMode.subtitleDuration && (
+                            <ResponsiveSettingsStack>
+                                <NumericSettingInput
+                                    disabled={readOnly}
+                                    color="primary"
+                                    fullWidth
+                                    label={t('settings.autoPauseDurationFactor')}
+                                    helperText={t('settings.autoPauseDurationFactorHelperText')}
+                                    value={autoPauseDurationFactor}
+                                    onValueChange={(value) => void onSettingChanged('autoPauseDurationFactor', value)}
+                                    slotProps={{
+                                        htmlInput: { min: 0, step: 0.1 },
+                                        input: { endAdornment: <InputAdornment position="end">×</InputAdornment> },
                                     }}
                                 />
                                 <NumericSettingInput

@@ -19,6 +19,8 @@ export const nextAutoPauseResumeMode = (mode: AutoPauseResumeMode): AutoPauseRes
             return AutoPauseResumeMode.fixed;
         case AutoPauseResumeMode.fixed:
             return AutoPauseResumeMode.subtitleLength;
+        // subtitleDuration (Mandarin Edition shadowing) is set by the Shadow recipe or in Settings,
+        // not by the cycle shortcut, so upstream's three-way cycle is unchanged.
         default:
             return AutoPauseResumeMode.manual;
     }
@@ -30,6 +32,8 @@ export const autoPauseResumeModeLocKey = (mode: AutoPauseResumeMode): string => 
             return 'settings.autoPauseResumeModeFixed';
         case AutoPauseResumeMode.subtitleLength:
             return 'settings.autoPauseResumeModeSubtitleLength';
+        case AutoPauseResumeMode.subtitleDuration:
+            return 'settings.autoPauseResumeModeSubtitleDuration';
         default:
             return 'settings.autoPauseResumeModeManual';
     }
@@ -54,8 +58,16 @@ export const autoPauseDurationMs = (
 ): number => {
     if (resume.mode === AutoPauseResumeMode.fixed) return resume.fixedDurationMs;
 
-    const characters = subtitles.reduce((total, { text }) => total + readableCharacterCount(text), 0);
-    const durationMs = Math.max(resume.minimumDurationMs, characters * resume.timePerCharacterMs);
+    let rawMs: number;
+    if (resume.mode === AutoPauseResumeMode.subtitleDuration) {
+        // Shadowing: room to say the line at the speaker's pace, with a little slack.
+        const spokenMs = subtitles.reduce((total, { start, end }) => total + Math.max(0, end - start), 0);
+        rawMs = spokenMs * resume.durationFactor;
+    } else {
+        const characters = subtitles.reduce((total, { text }) => total + readableCharacterCount(text), 0);
+        rawMs = characters * resume.timePerCharacterMs;
+    }
+    const durationMs = Math.max(resume.minimumDurationMs, rawMs);
     return resume.maximumDurationMs === 0 ? durationMs : Math.min(resume.maximumDurationMs, durationMs);
 };
 

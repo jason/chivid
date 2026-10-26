@@ -1,5 +1,14 @@
 # Mandarin Edition — release notes
 
+## Shadow mode and the tutor feed
+
+- **Shadow recipe** for speaking practice: the text shows, and after each line the video waits 1.3× the line's spoken length while you say it. Built on a new auto-pause resume mode, *Subtitle duration*, that pauses in proportion to how long the line was spoken rather than how many characters it has (upstream's *Subtitle length*). The factor is in Settings → Playback.
+- **Hear yourself.** During the pause the microphone records you. **P** plays the speaker's line and then your take. Without a microphone Shadow still pauses, with a one-time notice.
+- **Lookups in the ledger.** Resting on a word's meaning card for 600 ms records a `lookup` event (word, reading, meaning, sentence, time, recipe), once per word per line. A sweep across the line records nothing.
+- **Tutor block** (`tools/ledger_to_lesson.py`) now opens with "Words I looked up", most looked-up first with the sentence each appeared in, before the missed lines.
+- Upstream's resume-mode cycle shortcut is unchanged (the new mode is reached through the recipe or Settings), so this stays merge-friendly.
+- Tests: 1,977 unit, 17 end-to-end journeys (Shadow timing and recording with a fake microphone; a lookup through to the tutor script).
+
 ## Performance, percent known, cleanup
 
 - **The engine stays loaded.**
@@ -67,6 +76,8 @@
 - **No word frequencies.** The engine does not supply frequency data, so frequency annotations stay empty.
 - **Known characters are per profile.** Like any setting, they live in the active settings profile.
 - **The meaning card shows up to four CC-CEDICT senses** of the reading the sentence uses. Rare senses beyond that are left out.
+- **Shadow replays through the page's video**, so on sites with their own player controls (Netflix) the replay goes through asbplayer's seek and play; a site that blocks programmatic play will replay only your recording.
+- **Shadow recordings are not kept.** Only the latest take is held, in memory, for P.
 - **Two videos at once can mix up a meaning.** The engine leads a word's meaning with the reading it most recently chose. With two tabs playing different videos, a word read differently in each can occasionally show the other tab's sense.
 - **The offscreen document stays open while the browser runs** (about 28 MB with the engine loaded), as it did for asbplayer's audio capture.
 - **Extension pages** (side panel, popup) reach the engine through a registered fetcher. A page that does not register one cannot annotate with the engine.

@@ -43,6 +43,21 @@ const seededRecipes = [
             repeatCountPreference: 1,
         },
     },
+    {
+        name: 'Shadow',
+        playbackModes: [3],
+        settings: {
+            subtitleVisibility: 'whenDue',
+            hideUntilRevealed: false,
+            autoPausePreference: 2,
+            autoPauseResumeMode: 'subtitleDuration',
+            autoPauseDurationFactor: 1.3,
+            autoPauseMinimumDurationMs: 1200,
+            autoPauseMaximumDurationMs: 12000,
+            autoPauseResumeDelayMs: 0,
+            repeatCountPreference: 1,
+        },
+    },
 ];
 
 /** Settings for a learner with the edition on and the named recipe active (null for none). */
@@ -90,7 +105,7 @@ describe('Journey 2: turning the edition on adds three recipes, and switching ne
             assert.equal(stored.mandarinEditionEnabled, true);
             assert.deepEqual(
                 stored.recipes.map((recipe) => recipe.name),
-                ['Dialogue focus', 'Just Watch', 'Ears', 'Listen First']
+                ['Dialogue focus', 'Just Watch', 'Ears', 'Listen First', 'Shadow']
             );
             assert.equal(stored.recipes[2].settings.hideUntilRevealed, true);
             assert.match(stored.keyBindSet.cycleRecipesForward.keys, /shift\+L|⇧\+L/i);
@@ -112,6 +127,7 @@ describe('Journey 2: turning the edition on adds three recipes, and switching ne
                 ['Just Watch', 0, line(2).text],
                 ['Ears', 1, ''],
                 ['Listen First', 2, ''],
+                ['Shadow', 3, line(2).text],
             ];
             for (const [name, id, visible] of expectations) {
                 await h.press(s.page, 'Shift+L');
@@ -262,13 +278,54 @@ describe('Journey 5: a learner drills a short scene with the segment loop', () =
 });
 
 describe('Journey 6: the learner exports last night and hands it to their tutor', () => {
-    it('exports the ledger from settings as JSONL with one object per mark', async () => {
-        const s = await session(withRecipe('Ears'));
+    it('exports marks and looked-up words as JSONL, and the tutor script lists both', async () => {
+        // Enable through Settings, as a learner would, so track 1 points at the engine; then seed the recipes.
+        const app = await h.launch();
+        await h.setSettings(app.worker, h.baseSettings({ mandarinEditionEnabled: false }));
+        const enablePage = await openMiscSettings(app);
+        await enablePage.getByLabel('Enable Mandarin Edition').check();
+        await enablePage
+            .getByTestId('mandarin-known-characters')
+            .fill('我觉得这个的不太好你今天怎么这么早九点就开门了那为什么去因离家近啊');
+        await enablePage.getByTestId('mandarin-known-characters').blur();
+        await enablePage.waitForTimeout(500);
+        await h.setSettings(app.worker, withRecipe('Ears'));
+        const page = await h.openPlayer(app.context, server.url);
+        await h.dropSubtitles(page);
+        const s = { ...app, page };
         try {
             await h.seekTo(s.page, insideLine(2));
             await h.press(s.page, 'h');
             await h.seekTo(s.page, insideLine(5));
             await h.press(s.page, 'g');
+
+            // Switch to Just Watch (text showing), rest the pointer on 便宜 long enough to read its meaning,
+            // then sweep across 银行 too quickly for it to count.
+            // Shift+L from Ears: Listen First, Shadow, Off, Just Watch.
+            for (let i = 0; i < 4; ++i) await h.press(s.page, 'Shift+L');
+            await s.page.waitForTimeout(500);
+            assert.equal((await h.getSettings(s.worker, ['activeRecipeId'])).activeRecipeId, 0);
+            await h.seekTo(s.page, insideLine(3));
+            await s.page.waitForFunction(
+                () => document.querySelectorAll('.asbplayer-subtitles-container-bottom .asb-gloss-word').length > 0,
+                null,
+                { timeout: 15000 }
+            );
+            const richWord = (start) =>
+                s.page.locator(
+                    `.asbplayer-subtitles-container-bottom .asbplayer-subtitle-rich [data-asb-token-start="${start}"]`
+                );
+            await s.page
+                .locator('.asbplayer-subtitles-container-bottom .asbplayer-subtitle-text')
+                .hover({ force: true });
+            await richWord(5).hover();
+            await s.page.waitForTimeout(900);
+            await richWord(8)
+                .hover({ force: true, timeout: 2000 })
+                .catch(() => undefined);
+            await s.page.waitForTimeout(150);
+            await s.page.mouse.move(20, 20);
+            await s.page.waitForTimeout(400);
 
             const settingsPage = await s.context.newPage();
             await settingsPage.goto(`chrome-extension://${s.extensionId}/options.html`);
@@ -285,18 +342,23 @@ describe('Journey 6: the learner exports last night and hands it to their tutor'
                 .split('\n')
                 .map((l) => JSON.parse(l));
             assert.deepEqual(
-                events.map((e) => [e.result, e.sentence]),
+                events.map((e) => [e.kind, e.result ?? e.word, e.sentence]),
                 [
-                    ['missed', line(2).text],
-                    ['got', line(5).text],
+                    ['audio', 'missed', line(2).text],
+                    ['audio', 'got', line(5).text],
+                    ['lookup', '便宜', line(3).text],
                 ]
             );
+            assert.equal(events[2].reading, 'pián yi');
+            assert.match(events[2].gloss, /^cheap/);
+            assert.equal(events[2].recipe, 'Just Watch');
 
             const { execFileSync } = await import('node:child_process');
             const tool = new URL('../../tools/ledger_to_lesson.py', import.meta.url).pathname;
             const lesson = execFileSync('python3', [tool, path, '--hours', '1'], { encoding: 'utf8' });
             assert.match(lesson, /1 missed, 1 understood without text/);
             assert.ok(lesson.includes(`- ${line(2).text}  (0:04)`), lesson);
+            assert.match(lesson, /### Words I looked up \(1\)\n\n- \*\*便宜\*\* pián yi — cheap/);
         } finally {
             await s.close();
         }
@@ -320,7 +382,7 @@ describe('Journey 7: the learner sees and switches the mode from the on-video co
 
             await button.click();
             const items = frame.getByRole('menuitemradio');
-            assert.deepEqual(await items.allTextContents(), ['Off', 'Just Watch', 'Ears', 'Listen First']);
+            assert.deepEqual(await items.allTextContents(), ['Off', 'Just Watch', 'Ears', 'Listen First', 'Shadow']);
             const box = await items.last().boundingBox();
             assert.ok(box && box.height > 20, 'the last item is fully visible, not clipped');
 
@@ -432,14 +494,22 @@ describe('Journey 8: the built-in Chinese engine gives pinyin and meaning only w
                 { timeout: 15000 }
             );
             const glosses = (await shownGlosses(page)).filter(Boolean);
-            assert.ok(glosses.some((g) => /cheap/.test(g)), `便宜 is glossed as cheap, got ${glosses}`);
+            assert.ok(
+                glosses.some((g) => /cheap/.test(g)),
+                `便宜 is glossed as cheap, got ${glosses}`
+            );
             assert.ok(glosses.some((g) => /bank/.test(g)));
             assert.ok(!glosses.some((g) => /^I$|^of$/.test(g)), 'words of known characters get no gloss');
-            assert.ok(glosses.every((g) => !/-$/.test(g)), 'meanings are never hyphen-wrapped');
+            assert.ok(
+                glosses.every((g) => !/-$/.test(g)),
+                'meanings are never hyphen-wrapped'
+            );
 
             // Hovering 便宜 (characters 5-6) shows its meaning card; hovering 我 shows nothing.
             const richWord = (start) =>
-                page.locator(`.asbplayer-subtitles-container-bottom .asbplayer-subtitle-rich [data-asb-token-start="${start}"]`);
+                page.locator(
+                    `.asbplayer-subtitles-container-bottom .asbplayer-subtitle-rich [data-asb-token-start="${start}"]`
+                );
             await page.locator('.asbplayer-subtitles-container-bottom .asbplayer-subtitle-text').hover({ force: true });
             await richWord(5).hover();
             await page.waitForTimeout(300);
@@ -448,7 +518,6 @@ describe('Journey 8: the built-in Chinese engine gives pinyin and meaning only w
             await richWord(0).hover();
             await page.waitForTimeout(300);
             assert.equal(await cardShowing(page, 0), 'none');
-
 
             // Adding everything through an HSK level takes them away again.
             await settingsPage.bringToFront();
@@ -499,11 +568,9 @@ describe('Journey 8: the built-in Chinese engine gives pinyin and meaning only w
             await settingsPage.getByLabel('Enable Mandarin Edition').uncheck();
             await settingsPage.waitForTimeout(500);
             await page.bringToFront();
-            await page.waitForFunction(
-                () => !document.body.classList.contains('asbplayer-mandarin'),
-                null,
-                { timeout: 10000 }
-            );
+            await page.waitForFunction(() => !document.body.classList.contains('asbplayer-mandarin'), null, {
+                timeout: 10000,
+            });
             await h.seekTo(page, insideLine(2));
             const stock = await look();
             assert.equal(stock.background, 'rgba(0, 0, 0, 0)');
@@ -563,10 +630,16 @@ describe('Journey 9: the edition look reaches the dialogs, notifications and sub
                 { timeout: 10000 }
             );
             const notice = await h.notificationText(page);
-            const chars = h.lines.map((l) => l.text).join('').match(/\p{Script=Han}/gu);
+            const chars = h.lines
+                .map((l) => l.text)
+                .join('')
+                .match(/\p{Script=Han}/gu);
             const known = chars.filter((c) => '我觉得这个的不太好'.includes(c)).length;
             const unknown = new Set(chars.filter((c) => !'我觉得这个的不太好'.includes(c))).size;
-            assert.match(notice, new RegExp(`^${Math.floor((known / chars.length) * 100)}% of characters known · ${unknown} new`));
+            assert.match(
+                notice,
+                new RegExp(`^${Math.floor((known / chars.length) * 100)}% of characters known · ${unknown} new`)
+            );
             await h.seekTo(page, insideLine(3));
             await h.press(page, 'Shift+L');
             const pill = await page.evaluate(() => {
@@ -657,6 +730,66 @@ describe('Journey 10: the engine stays loaded when Chrome stops the idle backgro
             assert.ok(elapsed < 1500, `re-annotated in ${elapsed} ms without reloading the engine`);
         } finally {
             await app.close();
+        }
+    });
+});
+
+describe('Journey 11: Shadow mode: hear the line, say it in the pause, hear both back', () => {
+    it('pauses for 1.3x the line, records the learner meanwhile, and P plays the speaker then the learner', async () => {
+        const s = await session({ ...withRecipe('Shadow') });
+        try {
+            await s.context.grantPermissions(['microphone'], { origin: server.url });
+            // Start just before line 2 (4.0–6.5 s, 2.5 s long) and let it play out.
+            await h.seekTo(s.page, line(2).start - 300);
+            await h.play(s.page);
+            await s.page.waitForFunction(() => document.querySelector('video').paused, null, { timeout: 10000 });
+            const pausedAtMs = await h.currentMs(s.page);
+            assert.ok(Math.abs(pausedAtMs - line(2).end) < 400, `paused at the end of the line (${pausedAtMs})`);
+            assert.equal(await h.visibleSubtitle(s.page), line(2).text, 'Shadow keeps the text on screen');
+
+            // The pause should last about 1.3 x 2500 = 3250 ms, then play resumes on its own.
+            const pausedAt = Date.now();
+            await s.page.waitForFunction(() => !document.querySelector('video').paused, null, { timeout: 10000 });
+            const pauseMs = Date.now() - pausedAt;
+            assert.ok(pauseMs > 2600 && pauseMs < 4500, `paused for about 1.3x the line (${pauseMs} ms)`);
+            await h.pause(s.page);
+
+            // P: the speaker's line again, then the recording made during the pause.
+            await h.press(s.page, 'p');
+            await s.page.waitForFunction(
+                () => /^Them$/.test(document.querySelector('.asbplayer-notification')?.textContent ?? ''),
+                null,
+                { timeout: 5000 }
+            );
+            await s.page.waitForFunction(
+                () => /^You$/.test(document.querySelector('.asbplayer-notification')?.textContent ?? ''),
+                null,
+                { timeout: 10000 }
+            );
+            const replayedFromMs = await h.currentMs(s.page);
+            assert.ok(Math.abs(replayedFromMs - line(2).end) < 400, 'the speaker was replayed to the end of the line');
+            // The take plays from a hidden audio element that is removed when it ends.
+            const take = await s.page.evaluate(() => {
+                const audio = document.querySelector('audio[data-asbplayer-shadow-take]');
+                return audio ? { duration: audio.duration, src: audio.src.slice(0, 5) } : null;
+            });
+            assert.ok(take && take.src === 'blob:', 'the learner was recorded during the pause');
+            await s.page.waitForFunction(() => !document.querySelector('audio[data-asbplayer-shadow-take]'), null, {
+                timeout: 10000,
+            });
+        } finally {
+            await s.close();
+        }
+    });
+
+    it('says so when P is pressed before anything was recorded', async () => {
+        const s = await session({ ...withRecipe('Shadow') });
+        try {
+            await h.seekTo(s.page, insideLine(1));
+            await h.press(s.page, 'p');
+            assert.match(await h.notificationText(s.page), /Nothing recorded yet/);
+        } finally {
+            await s.close();
         }
     });
 });

@@ -7,7 +7,13 @@ import { adjacentSubtitle } from '@project/common/util';
 export type RecipeShortcut = 'cycleForward' | 'cycleBackward' | number;
 
 /** Mandarin Edition shortcuts. They are inert unless the edition is enabled. */
-export type LearningShortcutName = 'markLineGotIt' | 'markLineMissed' | 'revealLine' | 'segmentStart' | 'segmentEnd';
+export type LearningShortcutName =
+    | 'markLineGotIt'
+    | 'markLineMissed'
+    | 'revealLine'
+    | 'segmentStart'
+    | 'segmentEnd'
+    | 'shadowCompare';
 
 export interface KeyBinder {
     bindLearningShortcut(

@@ -2,6 +2,12 @@ import PlaybackEngine, {
     formatRecipeNotification,
     formatRecipeSettingLockedNotification,
 } from '@project/common/playback/playback-engine';
+import { LookupTracker } from '@project/common/mandarin/lookups';
+import type { LookupTarget } from '@project/common/mandarin/lookups';
+import type { NewLedgerEvent } from '@project/common/mandarin/ledger';
+import { ASB_SUBTITLE_INDEX_ATTRIBUTE } from '@project/common/annotations/dom-annotations';
+import { ShadowRecorder } from '@project/common/mandarin/shadow';
+import { mandarinRecipeId } from '@project/common/mandarin/recipes';
 import { comprehension, formatClock, formatShare } from '@project/common/mandarin/comprehension';
 import {
     adjacentSubtitle,
@@ -318,6 +324,7 @@ export default class Binding {
         this.subtitleController.onSubtitlesDisplayed = (indexes) => this.learningController.linesDisplayed(indexes);
         this.subtitleController.onSubtitlesReplaced = () => {
             this.learningController.subtitlesChanged();
+            this._lookups.reset();
             this._showComprehension();
         };
         this.videoDataSyncController = new VideoDataSyncController(this, this.settings);
@@ -459,6 +466,129 @@ export default class Binding {
         this.learningController.pressSegmentEnd();
     }
 
+    pressShadowCompare(): void {
+        void this.shadow.compare();
+    }
+
+    /** Mandarin Edition, Shadow recipe: the learner is recorded while the video waits for them. */
+    private _shadowActive = false;
+    private readonly shadow: ShadowRecorder = new ShadowRecorder({
+        startRecording: async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            const chunks: Blob[] = [];
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+            recorder.start();
+            return () =>
+                new Promise<Blob>((resolve) => {
+                    recorder.onstop = () => {
+                        stream.getTracks().forEach((track) => track.stop());
+                        resolve(new Blob(chunks, { type: recorder.mimeType }));
+                    };
+                    recorder.stop();
+                });
+        },
+        playRange: async (startMs, endMs) => {
+            await this.seek(startMs);
+            await this.play();
+            await new Promise<void>((resolve) => {
+                const check = () => {
+                    if (this.currentTimeMs >= endMs - 50 || this.video.paused) {
+                        this.video.removeEventListener('timeupdate', check);
+                        this.video.removeEventListener('pause', check);
+                        resolve();
+                    }
+                };
+                this.video.addEventListener('timeupdate', check);
+                this.video.addEventListener('pause', check);
+            });
+            this.pause();
+        },
+        playAudio: (audio) =>
+            new Promise<void>((resolve) => {
+                const url = URL.createObjectURL(audio);
+                const player = new Audio(url);
+                // In the page so the learner's tools (and the journeys) can see it play; hidden.
+                player.hidden = true;
+                player.dataset.asbplayerShadowTake = '';
+                document.body.appendChild(player);
+                const done = () => {
+                    URL.revokeObjectURL(url);
+                    player.remove();
+                    resolve();
+                };
+                player.onended = done;
+                player.onerror = done;
+                void player.play().catch(done);
+            }),
+        notify: (locKey, replacements) => this.subtitleController.notification({ locKey, replacements }),
+    });
+
+    /** Called when playback pauses on its own at the end of a line (upstream auto-pause). */
+    private _autoPausedForShadow(): void {
+        if (!this._shadowActive) return;
+        const [current] = this.subtitleController.currentSubtitle();
+        if (!current) return;
+        void this.shadow.pausedAfterLine(current.start, current.end);
+    }
+
+    private readonly _shadowPlayListener = () => void this.shadow.resumed();
+
+    /**
+     * Mandarin Edition: resting on a word's meaning card is a lookup, recorded in the ledger so
+     * the words the learner needed help with reach their tutor (tools/ledger_to_lesson.py).
+     */
+    private readonly _lookups = new LookupTracker({
+        setTimer: (callback, ms) => setTimeout(callback, ms),
+        clearTimer: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+        record: (target) => {
+            if (!this._mandarinEditionEnabled) return;
+            const subtitle = this.subtitleController.subtitles.find((s) => s.index === target.subtitleIndex);
+            if (!subtitle) return;
+            this._recordLearningEvent({
+                kind: 'lookup',
+                word: target.word,
+                reading: target.reading,
+                gloss: target.gloss,
+                sentence: subtitle.text,
+                track: subtitle.track,
+                start: subtitle.start,
+                end: subtitle.end,
+                sourceUrl: window.location.href,
+                title: document.title,
+                recipe: this._recipeName,
+            });
+        },
+    });
+
+    private _recipeName: string | null = null;
+
+    private _recordLearningEvent(event: NewLedgerEvent): void {
+        const command: VideoToExtensionCommand<RecordLearningEventMessage> = {
+            sender: 'asbplayer-video',
+            message: { command: 'mandarin-record-learning-event', event },
+            src: this._registeredVideoSrc,
+        };
+        void browser.runtime.sendMessage(command);
+    }
+
+    /** The word under the pointer when its meaning card is showing (an unknown-character word). */
+    private _lookupTargetAt(target: EventTarget | null): LookupTarget | undefined {
+        if (!(target instanceof Element)) return undefined;
+        const card = target.closest<HTMLElement>('.asb-gloss-word, .asb-gloss-popup');
+        if (!card || !card.querySelector('.asb-reading')) return undefined;
+        const line = card.closest<HTMLElement>(`[${ASB_SUBTITLE_INDEX_ATTRIBUTE}]`);
+        const index = Number(line?.getAttribute(ASB_SUBTITLE_INDEX_ATTRIBUTE));
+        if (!Number.isFinite(index)) return undefined;
+        const word = [...card.querySelectorAll('ruby.asb-reading')]
+            .map((r) => r.firstChild?.textContent ?? '')
+            .join('');
+        const reading = [...card.querySelectorAll('ruby.asb-reading rt')].map((rt) => rt.textContent ?? '').join(' ');
+        return { word, reading, gloss: card.dataset.asbGloss ?? '', subtitleIndex: index };
+    }
+
     private readonly _learningTimeListener = () => this.learningController.timeChanged(this.currentTimeMs);
 
     private _mandarinEditionEnabled = false;
@@ -513,14 +643,7 @@ export default class Binding {
             revealCurrentLines: () => this.subtitleController.revealCurrentLines(),
             rehideLines: (indexes) => this.subtitleController.rehideLines(indexes),
             seek: (timestampMs) => void this.seek(timestampMs),
-            recordEvent: (event) => {
-                const command: VideoToExtensionCommand<RecordLearningEventMessage> = {
-                    sender: 'asbplayer-video',
-                    message: { command: 'mandarin-record-learning-event', event },
-                    src: this._registeredVideoSrc,
-                };
-                void browser.runtime.sendMessage(command);
-            },
+            recordEvent: (event) => this._recordLearningEvent(event),
             notify: (locKey, replacements) => this.subtitleController.notification({ locKey, replacements }),
             sourceUrl: () => window.location.href,
             title: () => document.title,
@@ -694,7 +817,10 @@ export default class Binding {
                         scrollIntoView: false,
                     }),
                 clearAutoPauseTokenSelection: () => this.subtitleController.clearAutoPauseTokenSelection(),
-                pause: () => this.pause(),
+                pause: () => {
+                    this.pause();
+                    this._autoPausedForShadow();
+                },
                 play: async () => {
                     await this.play();
                 },
@@ -837,6 +963,7 @@ export default class Binding {
 
     bind() {
         this.video.addEventListener('timeupdate', this._learningTimeListener);
+        this.video.addEventListener('play', this._shadowPlayListener);
         asbTrace('playback/binding', 'Binding media owner', {
             readyState: this.video.readyState,
             hasVideoSrc: this.video.src.length > 0,
@@ -1046,7 +1173,9 @@ export default class Binding {
                 document.addEventListener('mousemove', this.mouseMoveListener);
             }
             this.hoveredToken.handleMouseOver(mouseEvent);
+            this._lookups.hovering(this._lookupTargetAt(mouseEvent.target));
         };
+        this.subtitleController.onMouseOut = () => this._lookups.hovering(undefined);
         this.subtitleController.onMouseOut = (mouseEvent: MouseEvent) => this.hoveredToken.handleMouseOut(mouseEvent);
 
         if (this.hasPageScript) {
@@ -1559,6 +1688,11 @@ export default class Binding {
             ...currentSettings,
             recipeName: activeRecipe(currentSettings)?.name ?? null,
         });
+        this._recipeName = activeRecipe(currentSettings)?.name ?? null;
+        const shadowActive =
+            currentSettings.mandarinEditionEnabled && mandarinRecipeId(activeRecipe(currentSettings)) === 'shadow';
+        if (this._shadowActive && !shadowActive) this.shadow.reset();
+        this._shadowActive = shadowActive;
         this.subtitleController.bottomSubtitlePositionOffset = currentSettings.subtitlePositionOffset;
         this.subtitleController.topSubtitlePositionOffset = currentSettings.topSubtitlePositionOffset;
         this.subtitleController.setSubtitlesWidth(currentSettings.subtitlesWidth, currentSettings.subtitlesWidthUnit);
@@ -1652,6 +1786,8 @@ export default class Binding {
 
     unbind() {
         this.video.removeEventListener('timeupdate', this._learningTimeListener);
+        this.video.removeEventListener('play', this._shadowPlayListener);
+        this.shadow.reset();
         this._subtitleSource = undefined;
         asbTrace('playback/binding', 'Unbinding media owner', {
             subscribed: this.subscribed,

@@ -65,6 +65,14 @@ export const EarPauseGlyph = strokeIcon(
     </>
 );
 
+/** Microphone with a sound wave: say the line back. */
+export const MicGlyph = strokeIcon(
+    <>
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" />
+    </>
+);
+
 const glyphFor = (id: MandarinRecipeId | undefined) => {
     switch (id) {
         case 'justWatch':
@@ -73,6 +81,8 @@ const glyphFor = (id: MandarinRecipeId | undefined) => {
             return EarGlyph;
         case 'listenFirst':
             return EarPauseGlyph;
+        case 'shadow':
+            return MicGlyph;
         default:
             return SlidersGlyph;
     }

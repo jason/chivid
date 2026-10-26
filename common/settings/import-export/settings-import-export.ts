@@ -725,7 +725,7 @@ const settingsSchema = {
         },
         autoPauseResumeMode: {
             type: 'string',
-            enum: ['manual', 'fixed', 'subtitleLength'],
+            enum: ['manual', 'fixed', 'subtitleLength', 'subtitleDuration'],
         },
         autoPauseResumeDelayMs: {
             type: 'number',
@@ -740,6 +740,9 @@ const settingsSchema = {
             type: 'number',
         },
         autoPauseTimePerCharacterMs: {
+            type: 'number',
+        },
+        autoPauseDurationFactor: {
             type: 'number',
         },
         subtitleVisibility: {
@@ -826,6 +829,7 @@ const settingsSchema = {
                 revealLine: { $ref: '/KeyBind' },
                 segmentStart: { $ref: '/KeyBind' },
                 segmentEnd: { $ref: '/KeyBind' },
+                shadowCompare: { $ref: '/KeyBind' },
                 moveBottomSubtitlesUp: { $ref: '/KeyBind' },
                 moveBottomSubtitlesDown: { $ref: '/KeyBind' },
                 moveTopSubtitlesUp: { $ref: '/KeyBind' },

@@ -188,7 +188,8 @@
         "markLineMissed": "Mark hidden line as missed (Mandarin Edition)",
         "revealLine": "Reveal the hidden line (Mandarin Edition)",
         "segmentStart": "Mark segment start, or replay it text-free while looping (Mandarin Edition)",
-        "segmentEnd": "Mark segment end and loop it, or stop the loop (Mandarin Edition)"
+        "segmentEnd": "Mark segment end and loop it, or stop the loop (Mandarin Edition)",
+        "shadowCompare": "Shadow: play the speaker’s line, then your recording (Mandarin Edition)"
     },
     "controls": {
         "autoPauseMode": "Pause automatique",
@@ -419,6 +420,9 @@
         "autoPauseMaximumDuration": "Maximum pause duration",
         "autoPauseMaximumDurationHelperText": "Use zero for no limit",
         "autoPauseTimePerCharacter": "Pause time per character",
+        "autoPauseResumeModeSubtitleDuration": "Subtitle duration (shadowing)",
+        "autoPauseDurationFactor": "Pause as a multiple of the line",
+        "autoPauseDurationFactorHelperText": "1.3 gives you the line’s spoken length plus a little slack to say it yourself.",
         "autoPauseResumeDelay": "Resume delay after auto-pause",
         "subtitleVisibility": "Show subtitles",
         "subtitleVisibilityWhenDue": "When due",
@@ -865,7 +869,7 @@
         "nothingToReveal": "No line to reveal yet",
         "settingsTitle": "Mandarin Edition",
         "enable": "Enable Mandarin Edition",
-        "enableHelp": "Adds the Just Watch, Ears and Listen First recipes (Shift+L to cycle), listening marks (G understood, H missed), Reveal (R) and the segment loop ([ and ]). Turn off to get stock asbplayer back.",
+        "enableHelp": "Adds the Just Watch, Ears, Listen First and Shadow recipes (Shift+L to cycle), listening marks (G understood, H missed), Reveal (R) and the segment loop ([ and ]). Turn off to get stock asbplayer back.",
         "exportLedger": "Export learning ledger",
         "ledgerEmpty": "Nothing recorded yet. Press G or H on a hidden line first.",
         "exportFailed": "Could not read the ledger. Try again from the extension settings page.",
@@ -890,6 +894,12 @@
             "noLine": "Play a line first",
             "endBeforeStart": "End must come after the start",
             "tooLong": "Segments are limited to 2 minutes"
+        },
+        "shadow": {
+            "them": "Them",
+            "you": "You",
+            "nothingRecorded": "Nothing recorded yet. In Shadow, say the line during the pause, then press P.",
+            "noMicrophone": "No microphone, so Shadow will pause for you but cannot play you back"
         }
     }
 }

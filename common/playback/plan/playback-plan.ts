@@ -69,10 +69,20 @@ export interface PlaybackPlanAutoPauseResumeSubtitleLength {
     readonly delayMs: number;
 }
 
+export interface PlaybackPlanAutoPauseResumeSubtitleDuration {
+    readonly mode: AutoPauseResumeMode.subtitleDuration;
+    readonly minimumDurationMs: number;
+    readonly maximumDurationMs: number;
+    /** The pause as a multiple of the line's spoken duration (its end minus its start). */
+    readonly durationFactor: number;
+    readonly delayMs: number;
+}
+
 export type PlaybackPlanAutoPauseResume =
     | PlaybackPlanAutoPauseResumeManual
     | PlaybackPlanAutoPauseResumeFixed
-    | PlaybackPlanAutoPauseResumeSubtitleLength;
+    | PlaybackPlanAutoPauseResumeSubtitleLength
+    | PlaybackPlanAutoPauseResumeSubtitleDuration;
 
 export interface PlaybackPlanAutoPause {
     readonly resume: PlaybackPlanAutoPauseResume;
@@ -119,6 +129,8 @@ export interface PlaybackPlanInput<T extends IndexedSubtitleModel> {
     readonly autoPauseMinimumDurationMs: number;
     readonly autoPauseMaximumDurationMs: number;
     readonly autoPauseTimePerCharacterMs: number;
+    /** Mandarin Edition shadowing; optional so upstream call sites and tests are untouched. */
+    readonly autoPauseDurationFactor?: number;
     readonly subtitleVisibility: SubtitleVisibility;
     readonly dictionaryTracks?: readonly DictionaryTrack[];
 }
@@ -337,6 +349,8 @@ const hiddenSubtitleIndexesForPlan = <T extends IndexedSubtitleModel>(
         .map((subtitle) => subtitle.index);
 };
 
+export const defaultAutoPauseDurationFactor = 1.3;
+
 const buildAutoPauseResume = <T extends IndexedSubtitleModel>(
     input: PlaybackPlanInput<T>
 ): PlaybackPlanAutoPauseResume => {
@@ -356,6 +370,18 @@ const buildAutoPauseResume = <T extends IndexedSubtitleModel>(
                 mode: AutoPauseResumeMode.subtitleLength,
                 ...bounds,
                 timePerCharacterMs: normalizeNonNegative(input.autoPauseTimePerCharacterMs),
+                delayMs: normalizeNonNegative(input.autoPauseResumeDelayMs),
+            };
+        }
+        case AutoPauseResumeMode.subtitleDuration: {
+            const bounds = normalizeAutoPauseDurationBounds(
+                input.autoPauseMinimumDurationMs,
+                input.autoPauseMaximumDurationMs
+            );
+            return {
+                mode: AutoPauseResumeMode.subtitleDuration,
+                ...bounds,
+                durationFactor: normalizeNonNegative(input.autoPauseDurationFactor ?? defaultAutoPauseDurationFactor),
                 delayMs: normalizeNonNegative(input.autoPauseResumeDelayMs),
             };
         }
@@ -644,6 +670,14 @@ export function playbackPlanAutoPauseResumesEqual(
                 left.minimumDurationMs === right.minimumDurationMs &&
                 left.maximumDurationMs === right.maximumDurationMs &&
                 left.timePerCharacterMs === right.timePerCharacterMs &&
+                left.delayMs === right.delayMs
+            );
+        case AutoPauseResumeMode.subtitleDuration:
+            return (
+                right.mode === AutoPauseResumeMode.subtitleDuration &&
+                left.minimumDurationMs === right.minimumDurationMs &&
+                left.maximumDurationMs === right.maximumDurationMs &&
+                left.durationFactor === right.durationFactor &&
                 left.delayMs === right.delayMs
             );
         default:

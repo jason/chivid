@@ -25,10 +25,28 @@ export type LedgerEvent =
     | {
           readonly v: typeof ledgerSchemaVersion;
           readonly ts: string;
+          /** The learner opened a word's meaning card: evidence the word is not known. */
+          readonly kind: 'lookup';
+          readonly word: string;
+          readonly reading: string;
+          readonly gloss: string;
+          readonly sentence: string;
+          readonly track: number;
+          readonly start: number;
+          readonly end: number;
+          readonly sourceUrl: string;
+          readonly title: string;
+          readonly recipe: string | null;
+      }
+    | {
+          readonly v: typeof ledgerSchemaVersion;
+          readonly ts: string;
           readonly kind: 'reset';
       };
 
-export type NewLedgerEvent = Omit<Extract<LedgerEvent, { kind: 'audio' }>, 'v' | 'ts'>;
+type WithoutStamp<T> = T extends unknown ? Omit<T, 'v' | 'ts'> : never;
+
+export type NewLedgerEvent = WithoutStamp<Extract<LedgerEvent, { kind: 'audio' | 'lookup' }>>;
 
 interface LedgerRow {
     readonly id?: number;
@@ -55,7 +73,7 @@ export class LedgerRepository {
     private readonly db = new MandarinDatabase();
 
     async append(event: NewLedgerEvent, now: Date = new Date()): Promise<LedgerEvent> {
-        const full: LedgerEvent = { v: ledgerSchemaVersion, ts: now.toISOString(), ...event };
+        const full = { v: ledgerSchemaVersion, ts: now.toISOString(), ...event } as LedgerEvent;
         await this.db.events.add({ ts: full.ts, kind: full.kind, event: full });
         return full;
     }

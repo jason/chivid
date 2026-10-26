@@ -44,6 +44,7 @@ export default class KeyBindings {
     private _unbindRevealLine: Unbinder = false;
     private _unbindSegmentStart: Unbinder = false;
     private _unbindSegmentEnd: Unbinder = false;
+    private _unbindShadowCompare: Unbinder = false;
     private _unbindAdjustSubtitlePositionOffset: Unbinder = false;
     private _unbindAdjustTopSubtitlePositionOffset: Unbinder = false;
     private _unbindOpenStatistics?: Unbinder = false;
@@ -194,6 +195,17 @@ export default class KeyBindings {
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 context.pressSegmentEnd();
+            },
+            learningInactive,
+            true
+        );
+
+        this._unbindShadowCompare = this._keyBinder.bindLearningShortcut(
+            'shadowCompare',
+            (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                context.pressShadowCompare();
             },
             learningInactive,
             true
@@ -609,6 +621,7 @@ export default class KeyBindings {
             this._unbindRevealLine,
             this._unbindSegmentStart,
             this._unbindSegmentEnd,
+            this._unbindShadowCompare,
         ]) {
             if (unbind) unbind();
         }
@@ -617,6 +630,7 @@ export default class KeyBindings {
         this._unbindRevealLine = false;
         this._unbindSegmentStart = false;
         this._unbindSegmentEnd = false;
+        this._unbindShadowCompare = false;
 
         if (this._unbindAdjustPlaybackRate) {
             this._unbindAdjustPlaybackRate();

@@ -8,7 +8,7 @@ import { defaultDictionaryTracks, TokenStatus } from '@project/common/settings/s
 import type { DictionaryTrack } from '@project/common/settings/settings-dictionary';
 import { mandarinEngineUrl } from '@project/common/mandarin/engine/engine-url';
 
-export type MandarinRecipeId = 'justWatch' | 'ears' | 'listenFirst';
+export type MandarinRecipeId = 'justWatch' | 'ears' | 'listenFirst' | 'shadow';
 
 /** The three learning recipes the Mandarin Edition adds when it is turned on. */
 export const mandarinRecipes: readonly (Recipe & { readonly id: MandarinRecipeId })[] = [
@@ -36,6 +36,23 @@ export const mandarinRecipes: readonly (Recipe & { readonly id: MandarinRecipeId
             repeatCountPreference: 1,
         },
     },
+    {
+        // Speaking practice: hear the line, then say it in a pause 1.3 times as long as the line.
+        id: 'shadow',
+        name: 'Shadow',
+        playbackModes: [PlayMode.autoPause],
+        settings: {
+            subtitleVisibility: SubtitleVisibility.whenDue,
+            hideUntilRevealed: false,
+            autoPausePreference: AutoPausePreference.atEnd,
+            autoPauseResumeMode: AutoPauseResumeMode.subtitleDuration,
+            autoPauseDurationFactor: 1.3,
+            autoPauseMinimumDurationMs: 1200,
+            autoPauseMaximumDurationMs: 12000,
+            autoPauseResumeDelayMs: 0,
+            repeatCountPreference: 1,
+        },
+    },
 ];
 
 /** Recognises one of the seeded recipes by name, so the overlay can give it its own icon. */
@@ -45,7 +62,7 @@ export const mandarinRecipeId = (recipe: Pick<Recipe, 'name'> | undefined): Mand
 export const recipeCycleShortcut = { keys: 'shift+L' };
 
 /**
- * Settings to write when the learner turns the Mandarin Edition on: adds any of the three
+ * Settings to write when the learner turns the Mandarin Edition on: adds any of the four
  * recipes they do not already have (matched by name, so renamed or edited copies are left alone)
  * and binds Shift+L to the next recipe if that shortcut is free. Never changes the active recipe.
  */

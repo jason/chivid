@@ -27,6 +27,7 @@ Turning the edition on adds three [recipes](https://docs.asbplayer.dev/docs/guid
 | Just Watch | eye | Shown when due | Enjoy the show, read along |
 | Ears | ear | Hidden, even when paused, until you press R | Train listening |
 | Listen First | ear with a pause | Hidden until R; pauses at the end of each line | Deliberate practice, line by line |
+| Shadow | microphone | Shown; pauses after each line for 1.3× its length while you say it | Speaking practice |
 
 The active recipe shows as its icon on the video controls; hover for its name, click for the list. You can edit these recipes or add your own in Settings → Playback; any recipe can include **Hide text until revealed**.
 
@@ -38,14 +39,19 @@ The active recipe shows as its icon on the video controls; hover for its name, c
 | R | Reveal the current line |
 | G | I understood the line I just heard |
 | H | I missed it |
+| P | Shadow: play the speaker's line, then your recording of it |
 | [ | Mark the start of a segment; while looping, replay it once more without text |
 | ] | Mark the end and loop the segment with text hidden; press again to stop |
 
 G and H only count for a line whose text you have not seen. After a Reveal, or with Just Watch where text is on screen, the press is refused and nothing is recorded. That rule is what makes the numbers mean "understood by ear".
 
+## Shadowing
+
+Pick **Shadow**. Each line plays, then the video waits about 1.3 times as long as the line took, and you say it. Chrome will ask for the microphone the first time; while the video waits, you are being recorded. Press **P** to hear the speaker's line and then your own attempt, back to back. If you refuse the microphone, Shadow still pauses for you, just without the playback. The pause length is Settings → Playback → Auto-pause → "Pause as a multiple of the line".
+
 ## Your learning ledger
 
-Every G and H is saved locally in the extension, never sent anywhere. Settings → Misc → **Export learning ledger** downloads a `.jsonl` file. To turn last night's misses into notes for your tutor:
+Every G and H is saved locally in the extension, never sent anywhere. So is every word you look up: resting the pointer on a word's meaning card for a moment records the word, its reading and meaning, and the sentence it was in. Settings → Misc → **Export learning ledger** downloads a `.jsonl` file. To turn last night's lookups and misses into notes for your tutor:
 
 ```bash
 python3 tools/ledger_to_lesson.py mandarin-ledger-*.jsonl --hours 24
