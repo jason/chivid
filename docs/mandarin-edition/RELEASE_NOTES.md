@@ -10,7 +10,7 @@
 - **Smaller install.** The zip leaves out source maps (17.4 MB, was 21.0 MB); dev builds keep them.
 - **Percent known.** When subtitles load, a notice shows what share of the episode's characters you know, how many new characters it has, and its hardest stretch, for example "93% of characters known · 41 new · hardest 12:40–14:10 (78%)". Repeats count, because that's what you actually read; about 95% known is the comfortable zone for learning from input.
 - **Engine label.** Settings → Annotation shows "Built-in Chinese engine" instead of `local://mandarin/known-…`, with a **Use Yomitan** button to switch the track to your own Yomitan.
-- **One branch.** `main` now holds the Mandarin Edition; the stacked feature branches are gone.
+- **One branch.** `main` now holds the Mandarin Edition. The old feature branches (`mandarin-edition`, `mandarin-recipes`, `mandarin-engine`) are fully merged and can be deleted.
 - Tests: 15 end-to-end journeys.
 
 ## Design polish: rough spots
